@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0 (2026-05-16)
+
+[Compare the full difference.](https://github.com/callowayproject/foreman/compare/0.4.1...0.5.0)
+
+### New
+
+- Add overrides, consent management, analytics integration, and design system assets. Update CSS for consistency and improve documentation layout. [3cff01c](https://github.com/callowayproject/foreman/commit/3cff01c842de8e60ce2c03272046349940cca8ad)
+
+- Add overrides, consent management, analytics integration, and design system assets. Update CSS for consistency and improve documentation layout. [2032f02](https://github.com/callowayproject/foreman/commit/2032f024398141ba92f3c7a43b75b95eaf62283e)
+
+### Other
+
+- Upgrade `aiohttp` from version 3.13.4 to 3.13.5 in `uv.lock` for dependency updates and improved stability. [752f3c7](https://github.com/callowayproject/foreman/commit/752f3c7d0637c5c62e95b203c08543f178fd6be5)
+
+### Updates
+
+- Update home page template. [fa5b323](https://github.com/callowayproject/foreman/commit/fa5b323d68705bcb0941ebb9ba7e2cf1edf2dbd4)
+
 ## 0.4.1 (2026-05-16)
 
 [Compare the full difference.](https://github.com/callowayproject/foreman/compare/0.4.0...0.4.1)
