@@ -104,4 +104,9 @@ def backend_from_config(config: ContainersConfig) -> ContainerBackend:
 
         return PodmanBackend(socket_url=config.socket_url)
 
+    if config.backend == "apple":
+        from night_brownie.containers.apple import AppleContainersBackend
+
+        return AppleContainersBackend()
+
     raise ContainerError(f"Unsupported container backend: {config.backend!r}")
