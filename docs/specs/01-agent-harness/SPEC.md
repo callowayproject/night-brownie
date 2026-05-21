@@ -92,8 +92,8 @@ This keeps credentials out of agent containers.
 ## 4. Project Structure
 
 ```text
-foreman/
-├── foreman/
+night-brownie/
+├── night_brownie/
 │   ├── __init__.py
 │   ├── config.py           # YAML config loader and validator (runtime repos/agents/LLM config)
 │   ├── settings.py         # App-level operational settings via pydantic-settings (env vars)
@@ -314,7 +314,7 @@ Matches the project's established toolchain:
 The following issues were identified in the boilerplate scaffolding and must be fixed before or during implementation:
 
 1. **`pyproject.toml` missing CLI entry point:** The `[project.scripts]` section is commented out.
-    Uncomment and point to the Foreman CLI once `foreman/__main__.py` is implemented.
+    Uncomment and point to the Foreman CLI once `night_brownie/__main__.py` is implemented.
 2. **`pyproject.toml` missing runtime dependencies:** `PyYAML`, `PyGithub`, `litellm`, `httpx`, `docker`
     (Python SDK) are not yet listed.
     Add these during the relevant implementation tasks.

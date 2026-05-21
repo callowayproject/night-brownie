@@ -67,25 +67,26 @@ This task fixes the three known scaffolding issues from spec §12 and completes 
 
 Known issues to fix (spec §12):
 
-1. `pyproject.toml` — uncomment `[project.scripts]` and point to `foreman/__main__.py`; add missing runtime deps
-    (`PyYAML`, `PyGithub`, `litellm`, `httpx`, `docker`)
+1. `pyproject.toml` — uncomment `[project.scripts]` and point to `night_brownie/__main__.py`; add missing runtime deps
+    (`PyYAML`, `PyGithub`, `litellm`, `httpxyz`, `docker`)
 2. `pyproject.toml` — targets Python 3.12+ (not 3.10+)
 3. `server.py` — currently a generic FastAPI template; the dispatch loop will be added in Task 11
     (retain existing middleware/CORS/logging setup)
 
 **Acceptance criteria:**
 
-- [ ] `pyproject.toml` names the project `foreman`, targets Python 3.12+, uses hatchling as build backend
-- [ ] `[project.scripts]` entry points to `foreman.__main__:main` (uncommented)
-- [ ] Runtime deps (`PyYAML`, `PyGithub`, `litellm`, `httpx`, `docker`) are listed
-- [ ] Remaining directories from spec §4 exist with stub files (`foreman/protocol.py`, `foreman/config.py`, etc.)
+- [ ] `pyproject.toml` names the project `night_brownie`, targets Python 3.12+, uses hatchling as build backend
+- [ ] `[project.scripts]` entry points to `night_brownie.__main__:main` (uncommented)
+- [ ] Runtime deps (`PyYAML`, `PyGithub`, `litellm`, `httpxyz`, `docker`) are listed
+- [ ] Remaining directories from spec §4 exist with stub files
+    (`night_brownie/protocol.py`, `night_brownie/config.py`, etc.)
 - [ ] `uv sync` succeeds
 - [ ] `pre-commit run --all-files` on stubs passes (or produces only expected stub-level failures)
 
 **Verification:**
 
 - [ ] `uv sync` exits 0
-- [ ] `python -c "import foreman"` succeeds
+- [ ] `python -c "import night_brownie"` succeeds
 - [ ] Directory tree matches spec §4
 
 **Dependencies:** None
@@ -93,14 +94,14 @@ Known issues to fix (spec §12):
 **Files likely touched:**
 
 - `pyproject.toml`
-- `foreman/__init__.py` + remaining submodule stubs
+- `night_brownie/__init__.py` + remaining submodule stubs
 - `agents/issue-triage/` scaffolding
 
 **Estimated scope:** Medium (3–5 files)
 
 ### Task 2: Config system — YAML loader + Pydantic validation
 
-**Description:** Implement `foreman/config.py`.
+**Description:** Implement `night_brownie/config.py`.
 Load `config.yaml`, resolve environment variable references
 (`${VAR}` syntax), validate with a Pydantic model that covers all fields in spec §5.
 Fail fast on startup with a clear error if validation fails.
@@ -122,8 +123,8 @@ No secret values should appear in repr/str output.
 
 **Files likely touched:**
 
-- `foreman/config.py`
-- `foreman/credentials.py` (env var resolution helper)
+- `night_brownie/config.py`
+- `night_brownie/credentials.py` (env var resolution helper)
 - `tests/test_config.py`
 - `config.example.yaml`
 
@@ -131,7 +132,7 @@ No secret values should appear in repr/str output.
 
 ### Task 3: Credential injection
 
-**Description:** Implement `foreman/credentials.py` —
+**Description:** Implement `night_brownie/credentials.py` —
 a thin module that resolves `${VAR}` references in config values and provides a `get_github_token() -> str` function.
 Ensure no credential value is written to logs.
 Credential resolution is already partially needed in Task 2; this task finalises the module and adds tests.
@@ -151,7 +152,7 @@ Credential resolution is already partially needed in Task 2; this task finalises
 
 **Files likely touched:**
 
-- `foreman/credentials.py`
+- `night_brownie/credentials.py`
 - `tests/test_credentials.py`
 
 **Estimated scope:** Small (1–2 files)
@@ -186,14 +187,14 @@ These are the shared data types used by the harness server, router, executor, an
 
 **Files likely touched:**
 
-- `foreman/protocol.py` (new — not in spec structure, add to `foreman/`)
+- `night_brownie/protocol.py` (new — not in spec structure, add to `night_brownie/`)
 - `tests/test_protocol.py`
 
 **Estimated scope:** Small (1–2 files)
 
 ### Task 5: Persistent memory (SQLite)
 
-**Description:** Implement `foreman/memory.py`.
+**Description:** Implement `night_brownie/memory.py`.
 Create the `action_log` and `memory_summary` tables on first run.
 Provide: `log_action(...)`, `get_summary(repo, issue_id) -> str | None`, `update_summary(repo, issue_id, summary)`.
 Use stdlib `sqlite3`.
@@ -216,7 +217,7 @@ No mocking in tests — use a real temp-file DB via pytest `tmp_path`.
 
 **Files likely touched:**
 
-- `foreman/memory.py`
+- `night_brownie/memory.py`
 - `tests/test_memory.py`
 
 **Estimated scope:** Small (1–2 files)
@@ -231,7 +232,7 @@ No mocking in tests — use a real temp-file DB via pytest `tmp_path`.
 
 ### Task 6: LLM backend base interface
 
-**Description:** Implement `foreman/llm/base.py` —
+**Description:** Implement `night_brownie/llm/base.py` —
 an abstract base class `LLMBackend` with a single method `complete(prompt: str, system: str | None) -> str`.
 Include a `from_config(config: LLMConfig) -> LLMBackend` factory.
 
@@ -249,15 +250,15 @@ Include a `from_config(config: LLMConfig) -> LLMBackend` factory.
 
 **Files likely touched:**
 
-- `foreman/llm/__init__.py`
-- `foreman/llm/base.py`
+- `night_brownie/llm/__init__.py`
+- `night_brownie/llm/base.py`
 - `tests/test_llm_base.py`
 
 **Estimated scope:** Small (1–2 files)
 
 ### Task 7: Anthropic + Ollama backends via LiteLLM
 
-**Description:** Implement `foreman/llm/anthropic.py` and `foreman/llm/ollama.py`, both wrapping LiteLLM.
+**Description:** Implement `night_brownie/llm/anthropic.py` and `night_brownie/llm/ollama.py`, both wrapping LiteLLM.
 Both classes implement `LLMBackend.complete`.
 Tests use recorded fixtures (real LLM responses captured once, stored in `tests/fixtures/`, replayed in CI).
 
@@ -278,8 +279,8 @@ Tests use recorded fixtures (real LLM responses captured once, stored in `tests/
 
 **Files likely touched:**
 
-- `foreman/llm/anthropic.py`
-- `foreman/llm/ollama.py`
+- `night_brownie/llm/anthropic.py`
+- `night_brownie/llm/ollama.py`
 - `tests/test_llm_backends.py`
 - `tests/fixtures/anthropic_triage_response.json`
 - `tests/fixtures/ollama_triage_response.json`
@@ -296,7 +297,7 @@ Tests use recorded fixtures (real LLM responses captured once, stored in `tests/
 
 ### Task 8: GitHub executor
 
-**Description:** Implement `foreman/executor.py`.
+**Description:** Implement `night_brownie/executor.py`.
 Given a `DecisionMessage`, translate each action into a GitHub API call (add label, post comment, close issue).
 All calls use the bot identity from config.
 Mock PyGithub/httpx at the boundary in tests.
@@ -319,14 +320,14 @@ Mock PyGithub/httpx at the boundary in tests.
 
 **Files likely touched:**
 
-- `foreman/executor.py`
+- `night_brownie/executor.py`
 - `tests/test_executor.py`
 
 **Estimated scope:** Small–Medium (2–3 files)
 
 ### Task 9: GitHub poller
 
-**Description:** Implement `foreman/poller.py`.
+**Description:** Implement `night_brownie/poller.py`.
 Poll all configured repos concurrently on `interval_seconds`.
 There is no maximum repo count, so use `asyncio` with a semaphore to bound concurrent GitHub API calls
 and avoid rate limits.
@@ -352,7 +353,7 @@ Skip issues created by repo owners/maintainers unless overridden.
 
 **Files likely touched:**
 
-- `foreman/poller.py`
+- `night_brownie/poller.py`
 - `tests/test_poller.py`
 
 **Estimated scope:** Medium (2–3 files)
@@ -367,10 +368,10 @@ Skip issues created by repo owners/maintainers unless overridden.
 
 ### Task 10: Router
 
-**Description:** Implement `foreman/routers/agent.py`.
+**Description:** Implement `night_brownie/routers/agent.py`.
 Map incoming GitHub events (by repo + event type) to the agent URL configured for that repo.
 Return a `RouteTarget` with the agent URL and merged agent config.
-Note: `foreman/routers/` already exists with `health.py` scaffolded — add `agent.py` to the same package.
+Note: `night_brownie/routers/` already exists with `health.py` scaffolded — add `agent.py` to the same package.
 
 **Acceptance criteria:**
 
@@ -388,15 +389,15 @@ Note: `foreman/routers/` already exists with `health.py` scaffolded — add `age
 
 **Files likely touched:**
 
-- `foreman/routers/agent.py` (new — in the existing `routers/` package)
-- `foreman/routers/__init__.py` (update exports)
+- `night_brownie/routers/agent.py` (new — in the existing `routers/` package)
+- `night_brownie/routers/__init__.py` (update exports)
 - `tests/test_router.py`
 
 **Estimated scope:** Small (1–2 files)
 
 ### Task 11: Harness HTTP server and dispatch loop
 
-**Description:** Extend `foreman/server.py` with the Foreman dispatch loop.
+**Description:** Extend `night_brownie/server.py` with the Foreman dispatch loop.
 The file is already scaffolded as a generic FastAPI app with CORS, GZip, middleware, and structlog —
 retain all of that and add: (1) receive routed events from the poller, (2) fetch the memory summary for context,
 (3) build a `TaskMessage`, (4) POST it to the agent container's `/task` endpoint, (5) receive the `DecisionMessage`,
@@ -420,35 +421,36 @@ This is the orchestration core.
 
 **Files likely touched:**
 
-- `foreman/server.py`
+- `night_brownie/server.py`
 - `tests/test_server.py`
 
 **Estimated scope:** Medium (2–3 files)
 
 ### Task 12: Main entrypoint and startup validation
 
-**Description:** Implement `foreman/__main__.py` (or a `foreman.main` module).
+**Description:** Implement `night_brownie/__main__.py` (or a `night_brownie.main` module).
 On startup: load and validate config
 (fail fast), initialize the memory DB, start the poller loop, start the FastAPI server.
-Provide a CLI entry point (`foreman start --config config.yaml`).
+Provide a CLI entry point (`night-brownie start --config config.yaml`).
 
 **Acceptance criteria:**
 
-- [ ] `foreman start --config missing.yaml` exits with a clear error message (non-zero)
+- [ ] `night-brownie start --config missing.yaml` exits with a clear error message (non-zero)
 - [ ] Invalid config exits with the specific field that failed validation
 - [ ] Startup sequence: validate → init DB → start poller → start server
 - [ ] `SIGINT` / `SIGTERM` shuts down cleanly (no orphaned threads)
 
 **Verification:**
 
-- [ ] `foreman start --config config.example.yaml` starts without error (requires example config with valid env vars set)
+- [ ] `night-brownie start --config config.example.yaml` starts without error
+    (requires example config with valid env vars set)
 - [ ] `pytest tests/test_main.py` covers startup error paths
 
 **Dependencies:** Tasks 2, 5, 9, 11
 
 **Files likely touched:**
 
-- `foreman/__main__.py`
+- `night_brownie/__main__.py`
 - `tests/test_main.py`
 
 **Estimated scope:** Small–Medium (2–3 files)
@@ -456,7 +458,7 @@ Provide a CLI entry point (`foreman start --config config.yaml`).
 ### Checkpoint: Phase 5 — Harness Core
 
 - [ ] `pytest tests/` passes (all harness tests)
-- [ ] `foreman start --config config.example.yaml` starts cleanly with valid env vars
+- [ ] `night-brownie start --config config.example.yaml` starts cleanly with valid env vars
 - [ ] Poller → Router → Server → Executor sequence is exercised end-to-end in a test
 - [ ] Review with human before proceeding
 
@@ -464,7 +466,7 @@ Provide a CLI entry point (`foreman start --config config.yaml`).
 
 ### Task 13: Container lifecycle manager
 
-**Description:** Implement `foreman/containers.py`.
+**Description:** Implement `night_brownie/containers.py`.
 The harness manages Docker container start/stop for each configured agent type.
 On startup, pull (if needed) and start agent containers.
 On shutdown, stop them.
@@ -483,13 +485,13 @@ Use the Docker SDK for Python (`docker` package).
 **Verification:**
 
 - [ ] `pytest tests/test_containers.py` passes with mocked Docker SDK calls
-- [ ] Manual: `foreman start` brings up the triage container and registers its URL
+- [ ] Manual: `night-brownie start` brings up the triage container and registers its URL
 
 **Dependencies:** Tasks 2, 10
 
 **Files likely touched:**
 
-- `foreman/containers.py`
+- `night_brownie/containers.py`
 - `tests/test_containers.py`
 
 **Estimated scope:** Medium (2–3 files)
@@ -510,7 +512,7 @@ Write the `Dockerfile` and `agents/issue-triage/pyproject.toml`.
 
 **Verification:**
 
-- [ ] `docker build -t foreman-issue-triage agents/issue-triage/` succeeds
+- [ ] `docker build -t night-brownie-issue-triage agents/issue-triage/` succeeds
 - [ ] `pytest tests/test_agent_triage.py` integration tests pass (spin up container locally)
 
 **Dependencies:** Tasks 4, 7, 13
@@ -561,7 +563,7 @@ The `Router.register_url()` method exists for exactly this purpose but is also n
 This task wires container startup/shutdown into `_run_start` / `_run_loop` and calls `router.register_url()` so
 that dynamically-assigned container ports are used at dispatch time.
 
-Changes needed in `foreman/__main__.py`:
+Changes needed in `night_brownie/__main__.py`:
 
 1. Instantiate `ContainerManager` in `_run_start` (or pass it into `_run_loop`).
 2. Collect the unique agent types configured across all repos.
@@ -573,7 +575,7 @@ Changes needed in `foreman/__main__.py`:
 
 **Acceptance criteria:**
 
-- [ ] `foreman start` pulls and starts agent containers before the poll loop begins
+- [ ] `night-brownie start` pulls and starts agent containers before the poll loop begins
 - [ ] `router.register_url` is called for each successfully started container
 - [ ] `stop_all` is called on clean shutdown (SIGINT/SIGTERM)
 - [ ] `ContainerError` on Docker unavailability exits with a clear error (non-zero exit code)
@@ -582,14 +584,14 @@ Changes needed in `foreman/__main__.py`:
 **Verification:**
 
 - [ ] `pytest tests/test_main.py` covers container startup, URL registration, and shutdown paths (mocked Docker SDK)
-- [ ] Manual: `foreman start --config config.example.yaml` brings up the triage container and registers its URL
+- [ ] Manual: `night-brownie start --config config.example.yaml` brings up the triage container and registers its URL
     before the first poll
 
 **Dependencies:** Tasks 10, 12, 13
 
 **Files likely touched:**
 
-- `foreman/__main__.py`
+- `night_brownie/__main__.py`
 - `tests/test_main.py`
 
 **Estimated scope:** Small (1–2 files)
@@ -646,8 +648,8 @@ Verify `pre-commit run --all-files` passes clean on the full codebase.
 
 **Verification:**
 
-- [ ] `python -c "from foreman.config import load_config; load_config('config.example.yaml')"` succeeds with required env
-    vars set
+- [ ] `python -c "from night_brownie.config import load_config; load_config('config.example.yaml')"` succeeds with
+    required env vars set
 - [ ] `pre-commit run --all-files` exits 0
 
 **Dependencies:** Task 2
@@ -663,7 +665,7 @@ Verify `pre-commit run --all-files` passes clean on the full codebase.
 
 - [ ] `pytest tests/` passes with ≥85% line / ≥80% branch coverage
 - [ ] `pre-commit run --all-files` exits 0
-- [ ] `foreman start --config config.example.yaml` starts and polls a test repo
+- [ ] `night-brownie start --config config.example.yaml` starts and polls a test repo
 - [ ] Issue triage works end-to-end: new issue → labeled + commented by bot
 - [ ] Human acceptance test: install on a real repo, triage one issue in <30 minutes
 - [ ] All acceptance criteria in spec §2 and §10 are met

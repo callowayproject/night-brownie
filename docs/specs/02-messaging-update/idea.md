@@ -18,7 +18,7 @@ The harness also has a background task that periodically checks for completed ta
 HTTP nudges are optimizations that degrade gracefully — the queue always wins.
 
 This preserves the core constraint: the harness owns all infrastructure.
-Agents embed a thin `foreman-client` library that handles queue I/O.
+Agents embed a thin `night-brownie-client` library that handles queue I/O.
 Agent authors call `client.next_task()` and `client.complete_task(task_id, decision)`.
 They don't implement queue management.
 
@@ -43,7 +43,7 @@ They don't implement queue management.
   `POST /result` endpoint for agent callback; background drain loop for
   completed tasks; re-enqueue tasks claimed but not completed within timeout
 - Harness reads: poll queue for completed tasks on callback + interval
-- `foreman-client` lib: `next_task()`, `complete_task(task_id, decision)`,
+- `night-brownie-client` lib: `next_task()`, `complete_task(task_id, decision)`,
   `heartbeat(task_id)` — heartbeat resets the claim timeout clock
 - Agent protocol: `POST /task → 202` (nudge only); startup queue poll;
   configurable background poll interval
@@ -73,7 +73,7 @@ They don't implement queue management.
 - What is the claim timeout?
   If an agent pulls a task and crashes before completing, the harness must detect and re-enqueue it —
   define the TTL and re-enqueue logic before writing the schema.
-- Is `foreman-client` a separate PyPI package, part of the `foreman` package,
+- Is `night-brownie-client` a separate PyPI package, part of the `night-brownie` package,
   or vendored into each agent at build time?
 - Should `GET /queue/status` be exposed on the harness for operator visibility,
   or is structured logging sufficient for MVP?

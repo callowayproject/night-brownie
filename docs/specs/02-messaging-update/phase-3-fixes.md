@@ -8,7 +8,7 @@ Status of all items from `phase-3-review.md` as of 2026-05-05.
 
 | # | Finding | Where fixed |
 |---|---------|-------------|
-| 1 | `httpx.Client` never closed | `client.py` — `close()`, `__enter__`, `__exit__` added; lifecycle tests in `TestForemanClientLifecycle` |
+| 1 | `httpx.Client` never closed | `client.py` — `close()`, `__enter__`, `__exit__` added; lifecycle tests in `TestNightBrownieClientLifecycle` |
 | 2 | `LLMBackendRef` / `TaskContext` not exported | `__init__.py` — both added to imports and `__all__` |
 | 3 | `import json` inside test methods | `test_client.py:5` — moved to module-level |
 | 4 | Misleading ordering comment | Removed; `test_sends_decision_then_nudge` now asserts both routes called |
@@ -17,23 +17,23 @@ Status of all items from `phase-3-review.md` as of 2026-05-05.
 
 ## Remaining Work
 
-### Task A — Add configurable `timeout` to `ForemanClient`
+### Task A — Add configurable `timeout` to `NightBrownieClient`
 
 **Priority:** Low (suggestion from review finding #6)
 
-**Files:** `foreman-client/foremanclient/client.py`, `foreman-client/tests/test_client.py`
+**Files:** `night-brownie-client/night_brownie_client/client.py`, `night-brownie-client/tests/test_client.py`
 
 **What to do:**
 
-1. Add `timeout: float = 5.0` parameter to `ForemanClient.__init__`.
+1. Add `timeout: float = 5.0` parameter to `NightBrownieClient.__init__`.
 2. Pass it to `httpx.Client(base_url=harness_url, timeout=timeout)`.
 3. Update the class docstring Args section to document the new parameter.
-4. Add one test in `TestForemanClientLifecycle` verifying that the timeout value is
+4. Add one test in `TestNightBrownieClientLifecycle` verifying that the timeout value is
    forwarded to the underlying `httpx.Client`.
 
 **Acceptance criteria:**
 
-- [x] `ForemanClient("http://h", "http://a", timeout=10.0)` constructs without error.
+- [x] `NightBrownieClient("http://h", "http://a", timeout=10.0)` constructs without error.
 - [x] `httpx.Client` is initialised with the supplied timeout value.
 - [x] Default behaviour (no `timeout` arg) is unchanged — uses 5.0 s.
 - [x] Docstring documents the parameter.

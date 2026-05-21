@@ -22,8 +22,8 @@ If you manage agent containers yourself and use `url:` in your agent config, Doc
 Clone the repository and install dependencies:
 
 ```bash
-git clone https://github.com/callowayproject/foreman.git
-cd foreman
+git clone https://github.com/callowayproject/night_brownie.git
+cd night_brownie
 uv sync
 ```
 
@@ -36,18 +36,18 @@ uv sync --only-group default
 
 ## Verify
 
-Check that the `foreman` command is available:
+Check that the `night-brownie` command is available:
 
 ```bash
-uv run foreman --help
+uv run night-brownie --help
 ```
 
 You should see:
 
 ```text
-usage: foreman [-h] {start} ...
+usage: night-brownie [-h] {start} ...
 
-Foreman — AI OSS co-maintainer harness
+Night Brownie — AI OSS co-maintainer harness
 
 ...
 ```

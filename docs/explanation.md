@@ -1,12 +1,12 @@
 ---
-title: How Foreman Works
-summary: Conceptual explanation of Foreman's security model, ownership boundaries, and design decisions.
+title: How Night Brownie Works
+summary: Conceptual explanation of Night Brownie's security model, ownership boundaries, and design decisions.
 date: 2026-04-21T00:00:00.000000+00:00
 hide:
   - navigation
 ---
 
-# How Foreman Works
+# How Night Brownie Works
 
 ## The Core Problem
 
@@ -15,12 +15,13 @@ post comments, and close tickets on your behalf.
 The obvious risk: an agent that has direct access to your GitHub token can do anything that token permits,
 including actions you didn't intend, triggered by a malformed payload or a prompt injection in an issue body.
 
-Foreman is designed around a single constraint that eliminates this risk: **the harness owns all GitHub API calls.**
+Night Brownie is designed around a single constraint that eliminates this risk:
+**the harness owns all GitHub API calls.**
 **Agents never see your credentials.**
 
 ## Strict Vertical Ownership
 
-Every component in Foreman has a single responsibility and owns exactly one layer:
+Every component in Night Brownie has a single responsibility and owns exactly one layer:
 
 ```text
 GitHub API polling (poller.py)
@@ -60,11 +61,11 @@ With the harness as the gatekeeper, the constraint is enforced once, centrally.
 Docker containers are isolated processes, but they're not hardened sandboxes.
 If an issue body contained a prompt injection that convinced an agent to exfiltrate environment variables,
 a direct-token agent would leak your GitHub token.
-A Foreman agent has no token to leak.
+A Night Brownie agent has no token to leak.
 
 ## Memory and Context
 
-Foreman maintains a SQLite database (`~/.agent-harness/memory.db`) with three tables:
+Night Brownie maintains a SQLite database (`~/.night-brownie/memory.db`) with three tables:
 
 - **`action_log`** every decision logged before execution, with the rationale and action list.
 - **`memory_summary`** a per-(repo, issue) LLM-generated summary injected into the next task for that issue,

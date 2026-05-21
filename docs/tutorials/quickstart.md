@@ -58,7 +58,7 @@ repos:
       - type: issue-triage
         allow_close: false
         config:
-          image: "foreman-issue-triage:latest"
+          image: "night-brownie-issue-triage:latest"
           port: 9001
           stale_days: 30
           labels:
@@ -72,13 +72,13 @@ Change it to `true` only after you're comfortable with the agent's behavior.
 ## Step 4: Start Foreman
 
 ```bash
-uv run foreman start --config config.yaml
+uv run night-brownie start --config config.yaml
 ```
 
 Foreman will:
 
 1. Validate your config and resolve environment variable references.
-2. Pull the `foreman-issue-triage` Docker image if it is not cached locally.
+2. Pull the `night-brownie-issue-triage` Docker image if it is not cached locally.
 3. Start the issue-triage agent container on port 9001.
 4. Begin polling `your-org/your-repo` every 60 seconds.
 

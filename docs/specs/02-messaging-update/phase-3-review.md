@@ -1,7 +1,7 @@
-# Phase 3 Code Review — `foreman-client`
+# Phase 3 Code Review — `night-brownie-client`
 
 Reviewed commit `adffcef` (Phase 3 implementation).
-Files: `foreman-client/foremanclient/client.py`, `models.py`, `__init__.py`, `tests/test_client.py`.
+Files: `night-brownie-client/night_brownie_client/client.py`, `models.py`, `__init__.py`, `tests/test_client.py`.
 
 ---
 
@@ -11,8 +11,8 @@ Files: `foreman-client/foremanclient/client.py`, `models.py`, `__init__.py`, `te
 
 #### 1. `httpx.Client` is never closed (`client.py:51`)
 
-`ForemanClient.__init__` creates `self._http = httpx.Client(base_url=harness_url)` but the class has no `close()` method
-and no context manager support.
+`NightBrownieClient.__init__` creates `self._http = httpx.Client(base_url=harness_url)`
+but the class has no `close()` method and no context manager support.
 The `httpx.Client` holds a connection pool; in long-running agent services this leaks file descriptors.
 
 **Fix:** add `close()` and `__enter__`/`__exit__`:
@@ -22,7 +22,7 @@ def close(self) -> None:
     """Close the underlying HTTP connection pool."""
     self._http.close()
 
-def __enter__(self) -> ForemanClient:
+def __enter__(self) -> NightBrownieClient:
     return self
 
 def __exit__(self, *_: object) -> None:
@@ -38,7 +38,7 @@ They should be in `__all__` alongside `TaskMessage`.
 **Fix:** add to `__init__.py`:
 
 ```python
-from foremanclient.models import (
+from night_brownie_client.models import (
     ActionItem, DecisionMessage, DecisionType,
     LLMBackendRef, TaskContext, TaskMessage,
 )

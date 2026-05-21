@@ -7,7 +7,7 @@ Tasks are ordered: high-priority blockers first, then medium, then low.
 
 ## Task 1 — Wrap `_drain_loop` body in exception handlers
 
-**File:** `foreman/server.py:131-149` **Priority:** High (must fix before merge)
+**File:** `night_brownie/server.py:131-149` **Priority:** High (must fix before merge)
 
 Wrap the outer `drain_completed()` call in a broad `try/except` that logs and continues so the loop never dies.
 Wrap each per-task `executor.execute()` + `memory.upsert_memory_summary()` block in a separate inner `try/except`
@@ -30,7 +30,8 @@ so a previously-crashed drain task does not re-raise during shutdown.
 
 ## Task 2 — Split `drain_completed` / add `mark_done`; transition `done` after execute
 
-**Files:** `foreman/queue.py:179-183`, `foreman/server.py:138-146` **Priority:** High (must fix before merge)
+**Files:** `night_brownie/queue.py:179-183`, `night_brownie/server.py:138-146` **Priority:** High
+(must fix before merge)
 
 Remove the `UPDATE … done` + `commit` from `drain_completed` so it only reads rows.
 Add a new `mark_done(task_id: str) -> None` method that transitions a single row to `done` and commits.
@@ -74,7 +75,7 @@ that calls `client.next_task()` repeatedly until it returns `None`, processing e
 
 ## Task 4 — Wrap `_requeue_loop` body in exception handler
 
-**File:** `foreman/server.py:163-168` **Priority:** Medium (should fix)
+**File:** `night_brownie/server.py:163-168` **Priority:** Medium (should fix)
 
 Mirror the fix from Task 1: wrap the `requeue_stale()` + `fail_exhausted()` block in `try/except Exception` with
 `logger.exception`.
@@ -91,7 +92,7 @@ Also extend `_lifespan` finally block's `contextlib.suppress` for `requeue_task`
 
 ## Task 5 — Remove private-attribute access across module boundary
 
-**Files:** `foreman/server.py`, `foreman/__main__.py:167` **Priority:** Low (nice to have)
+**Files:** `night_brownie/server.py`, `night_brownie/__main__.py:167` **Priority:** Low (nice to have)
 
 Rename `Dispatcher._executor` to `Dispatcher.executor` (public).
 Update `__main__.py` to use `dispatcher.executor`.
@@ -125,7 +126,7 @@ that fires `client.heartbeat(task.task_id)` every 25 seconds until the triage ca
 
 **File:** `docs/howtos/write-an-agent.md:125-156` **Priority:** Low (nice to have)
 
-Replace the module-level `ForemanClient` instantiation
+Replace the module-level `NightBrownieClient` instantiation
 and bare `FastAPI()` with a proper `@asynccontextmanager lifespan` that: creates the client, runs a startup poll
 (claiming any queued tasks), yields, and closes the client.
 Pass the lifespan to `FastAPI(lifespan=lifespan)`.
@@ -133,7 +134,7 @@ Pass the lifespan to `FastAPI(lifespan=lifespan)`.
 **Acceptance criteria:**
 
 - [x] Minimal example uses `@asynccontextmanager` lifespan (import from `contextlib`)
-- [x] Lifespan creates `ForemanClient`, calls `next_task()` + `complete_task()` in a startup-poll loop, yields,
+- [x] Lifespan creates `NightBrownieClient`, calls `next_task()` + `complete_task()` in a startup-poll loop, yields,
     calls `client.close()`
 - [x] `FastAPI(lifespan=lifespan)` used instead of bare `FastAPI()`
 - [x] A note is added (or the startup-poll section is cross-linked) so readers understand why the lifespan is needed

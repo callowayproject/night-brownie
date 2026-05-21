@@ -13,11 +13,12 @@ Zero task loss under an agent restart is the MVP acceptance criterion.
   and retry defaults flow from config into every other component.
 - **Harness owns the database:** Agents never touch `queue.db` directly.
   All queue I/O goes through HTTP endpoints on the harness.
-  `foreman-client` wraps these calls.
+  `night-brownie-client` wraps these calls.
 - **Three new harness endpoints:** `POST /queue/next` (claim), `POST /queue/complete`
   (store result), `POST /queue/heartbeat` (extend claim window); plus `POST /harness/result` (drain nudge).
   Only `/harness/result` is specified in the spec;
-  the other three are the implicit contract required by `ForemanClient.next_task()` / `complete_task()` / `heartbeat()`.
+  the other three are the implicit contract required by `NightBrownieClient.next_task()` / `complete_task()` /
+  `heartbeat()`.
 - **`complete_task()` does two things:** stores the `DecisionMessage` in the queue DB *and*
   sends `POST /harness/result` to nudge the drain loop — so agent authors call only one method.
 - **Delete the synchronous path entirely in Phase 4:** no fallback, no feature flag.
@@ -58,15 +59,15 @@ Update `config.example.yaml` with the new section (commented out, showing defaul
 
 **Files likely touched:**
 
-- `foreman/config.py`
+- `night_brownie/config.py`
 - `config.example.yaml`
 - `tests/test_config.py`
 
 **Estimated scope:** S
 
-#### Task 2: Implement `foreman/queue.py` — `TaskQueue`
+#### Task 2: Implement `night_brownie/queue.py` — `TaskQueue`
 
-**Description:** Create `foreman/queue.py` with the `TaskQueue` class and `queue.db` schema.
+**Description:** Create `night_brownie/queue.py` with the `TaskQueue` class and `queue.db` schema.
 Follow the exact patterns from `memory.py`: `PRAGMA journal_mode=WAL`, `check_same_thread=False`,
 `executescript` for DDL, no ORM.
 Implement all six public methods from the spec.
@@ -96,7 +97,7 @@ or a `SELECT … FOR UPDATE` workaround to be concurrency-safe under multiple si
 
 **Files likely touched:**
 
-- `foreman/queue.py` (new)
+- `night_brownie/queue.py` (new)
 
 **Estimated scope:** M
 
@@ -115,11 +116,11 @@ Use `freezegun` or manual timestamp manipulation to test timeout-based behaviour
 - [x] `requeue_stale`: task claimed but not heartbeated past timeout → re-enqueued, `retry_count` incremented
 - [x] `fail_exhausted`: task at `max_retries` → `status=failed`
 - [x] Concurrent claim: two threads call `claim_next()` simultaneously; only one receives the task
-- [x] Coverage ≥85% line / ≥80% branch for `foreman/queue.py`
+- [x] Coverage ≥85% line / ≥80% branch for `night_brownie/queue.py`
 
 **Verification:**
 
-- [x] `uv run pytest --agent-digest=term tests/test_queue.py --cov=foreman/queue.py`
+- [x] `uv run pytest --agent-digest=term tests/test_queue.py --cov=night_brownie/queue.py`
 - [x] `pre-commit run --all-files`
 
 **Dependencies:** Task 2
@@ -139,10 +140,10 @@ Use `freezegun` or manual timestamp manipulation to test timeout-based behaviour
 
 ### Phase 2: Harness Queue API Endpoints
 
-#### Task 4: Queue HTTP endpoints — `foreman/routers/queue.py`
+#### Task 4: Queue HTTP endpoints — `night_brownie/routers/queue.py`
 
-**Description:** Add three new harness endpoints that `ForemanClient` will call.
-Follow the existing router pattern (`foreman/routers/health.py`).
+**Description:** Add three new harness endpoints that `NightBrownieClient` will call.
+Follow the existing router pattern (`night_brownie/routers/health.py`).
 The router receives a `TaskQueue` instance via FastAPI dependency injection (use `app.state.task_queue`).
 
 | Endpoint                | Body                   | Response                              |
@@ -172,12 +173,12 @@ The router receives a `TaskQueue` instance via FastAPI dependency injection (use
 
 **Files likely touched:**
 
-- `foreman/routers/queue.py` (new)
-- `foreman/server.py` (register router, expose `task_queue` on `app.state`)
+- `night_brownie/routers/queue.py` (new)
+- `night_brownie/server.py` (register router, expose `task_queue` on `app.state`)
 
 **Estimated scope:** M
 
-#### Task 5: `POST /harness/result` endpoint — `foreman/routers/result.py`
+#### Task 5: `POST /harness/result` endpoint — `night_brownie/routers/result.py`
 
 **Description:** Add the agent-nudge endpoint from spec §3.4.
 On receipt, it triggers the drain loop immediately (in addition to its background schedule).
@@ -199,8 +200,8 @@ The trigger mechanism is an `asyncio.Event` set in the background loop and reset
 
 **Files likely touched:**
 
-- `foreman/routers/result.py` (new)
-- `foreman/server.py` (register router)
+- `night_brownie/routers/result.py` (new)
+- `night_brownie/server.py` (register router)
 
 **Estimated scope:** S
 
@@ -238,40 +239,40 @@ Verify HTTP contracts only.
 - [x] All three queue endpoints + `/harness/result` exist and return correct status codes
 - [x] Human review before proceeding
 
-### Phase 3: `foreman-client` Package
+### Phase 3: `night-brownie-client` Package
 
-#### Task 7: Scaffold `foreman-client` package + `models.py`
+#### Task 7: Scaffold `night-brownie-client` package + `models.py`
 
-**Description:** Create the `foreman-client/` directory tree with its own `pyproject.toml`
+**Description:** Create the `night-brownie-client/` directory tree with its own `pyproject.toml`
 (mirroring the main project's tooling: ruff, mypy, interrogate, pydoclint).
-Add `models.py` that re-exports `TaskMessage` and `DecisionMessage` from `foreman.protocol` — or,
-since `foreman-client` must be installable independently,
-copy the minimal Pydantic models into `foremanclient/models.py` (no dependency on the `foreman` package).
+Add `models.py` that re-exports `TaskMessage` and `DecisionMessage` from `night_brownie.protocol` — or,
+since `night-brownie-client` must be installable independently,
+copy the minimal Pydantic models into `night_brownie_client/models.py` (no dependency on the `night_brownie` package).
 
 **Acceptance criteria:**
 
 - [x] Directory structure matches spec §3.3
-- [x] `foremanclient/models.py` defines `TaskMessage` and `DecisionMessage` as standalone
-  Pydantic models (no `foreman.*` imports)
+- [x] `night_brownie_client/models.py` defines `TaskMessage` and `DecisionMessage` as standalone
+  Pydantic models (no `night_brownie.*` imports)
 - [x] `pyproject.toml` has `httpx` and `pydantic>=2` as runtime deps; dev deps mirror main project
-- [x] `uv sync` inside `foreman-client/` succeeds
-- [x] `pre-commit run --all-files` passes inside `foreman-client/`
+- [x] `uv sync` inside `night-brownie-client/` succeeds
+- [x] `pre-commit run --all-files` passes inside `night-brownie-client/`
 
 **Verification:**
 
-- [x] `cd foreman-client && uv sync && pre-commit run --all-files`
+- [x] `cd night-brownie-client && uv sync && pre-commit run --all-files`
 
 **Dependencies:** Tasks 4, 5 (need to know the HTTP contract)
 
 **Files likely touched:**
 
-- `foreman-client/pyproject.toml` (new)
-- `foreman-client/foremanclient/__init__.py` (new)
-- `foreman-client/foremanclient/models.py` (new)
+- `night-brownie-client/pyproject.toml` (new)
+- `night-brownie-client/night_brownie_client/__init__.py` (new)
+- `night-brownie-client/night_brownie_client/models.py` (new)
 
 **Estimated scope:** S
 
-#### Task 8: Implement `ForemanClient` in `foremanclient/client.py`
+#### Task 8: Implement `NightBrownieClient` in `night_brownie_client/client.py`
 
 **Description:** Implement the three public methods using `httpx`.
 All HTTP calls are synchronous (no `asyncio` in the client — agent authors control their own async if needed).
@@ -282,34 +283,34 @@ All HTTP calls are synchronous (no `asyncio` in the client — agent authors con
 - `heartbeat(task_id)` → `POST /queue/heartbeat`
 
 Log structured events for each call using `structlog`
-(already a dep in the main project; add it to `foreman-client` as well).
+(already a dep in the main project; add it to `night-brownie-client` as well).
 
 **Acceptance criteria:**
 
 - [x] `next_task()` returns a `TaskMessage` on 200, `None` on 204
 - [x] `complete_task()` sends decision to `/queue/complete` then sends nudge to `/harness/result`
 - [x] `heartbeat()` sends `{"task_id": ...}` to `/queue/heartbeat`
-- [x] All methods raise `ForemanClientError` (a custom exception) on non-2xx responses
+- [x] All methods raise `NightBrownieClientError` (a custom exception) on non-2xx responses
 - [x] All public methods and the class have Google-style docstrings (pydoclint passes)
 - [x] Type hints on all public methods
 
 **Verification:**
 
-- [x] `uv run pytest --agent-digest=term` inside `foreman-client/` (tests written in Task 9)
-- [x] `pre-commit run --all-files` inside `foreman-client/`
+- [x] `uv run pytest --agent-digest=term` inside `night-brownie-client/` (tests written in Task 9)
+- [x] `pre-commit run --all-files` inside `night-brownie-client/`
 
 **Dependencies:** Task 7
 
 **Files likely touched:**
 
-- `foreman-client/foremanclient/client.py` (new)
-- `foreman-client/foremanclient/__init__.py` (update exports)
+- `night-brownie-client/night_brownie_client/client.py` (new)
+- `night-brownie-client/night_brownie_client/__init__.py` (update exports)
 
 **Estimated scope:** M
 
-#### Task 9: Tests for `foremanclient`
+#### Task 9: Tests for `night_brownie_client`
 
-**Description:** Write `foreman-client/tests/test_client.py` using `respx`
+**Description:** Write `night-brownie-client/tests/test_client.py` using `respx`
 (or `httpx.MockTransport`) to mock the harness HTTP endpoints.
 Never spin up a real harness.
 
@@ -319,28 +320,28 @@ Never spin up a real harness.
 - [x] `next_task()` returns `None` when harness returns 204
 - [x] `complete_task()` sends `DecisionMessage` JSON to `/queue/complete` then nudge to `/harness/result`
 - [x] `heartbeat()` sends `{"task_id": ...}` to `/queue/heartbeat`
-- [x] `ForemanClientError` raised on 4xx/5xx responses
-- [x] Coverage ≥85% line / ≥80% branch for `foremanclient/client.py`
+- [x] `NightBrownieClientError` raised on 4xx/5xx responses
+- [x] Coverage ≥85% line / ≥80% branch for `night_brownie_client/client.py`
 
 **Verification:**
 
-- [x] `cd foreman-client && uv run pytest --agent-digest=term --cov=foremanclient/client.py`
-- [x] `pre-commit run --all-files` inside `foreman-client/`
+- [x] `cd night-brownie-client && uv run pytest --agent-digest=term --cov=night_brownie_client/client.py`
+- [x] `pre-commit run --all-files` inside `night-brownie-client/`
 
 **Dependencies:** Task 8
 
 **Files likely touched:**
 
-- `foreman-client/tests/__init__.py` (new)
-- `foreman-client/tests/test_client.py` (new)
+- `night-brownie-client/tests/__init__.py` (new)
+- `night-brownie-client/tests/test_client.py` (new)
 
 **Estimated scope:** M
 
 ### Checkpoint: Phase 3
 
-- [x] `foreman-client` tests pass with ≥85% line coverage
-- [x] `pre-commit run --all-files` passes in both `foreman-client/` and root
-- [x] Human review of `ForemanClient` public API before proceeding (API is the contract agent
+- [x] `night-brownie-client` tests pass with ≥85% line coverage
+- [x] `pre-commit run --all-files` passes in both `night-brownie-client/` and root
+- [x] Human review of `NightBrownieClient` public API before proceeding (API is the contract agent
   authors depend on — changes after this point are breaking)
 
 ### Phase 4: Dispatcher Refactor and Background Loops
@@ -378,7 +379,7 @@ The `Dispatcher` constructor gains a `task_queue: TaskQueue` parameter.
 
 **Files likely touched:**
 
-- `foreman/server.py`
+- `night_brownie/server.py`
 - `tests/test_server.py` (update existing tests)
 
 **Estimated scope:** M
@@ -415,7 +416,7 @@ Both tasks are cancelled cleanly on shutdown.
 
 **Files likely touched:**
 
-- `foreman/server.py`
+- `night_brownie/server.py`
 - `tests/test_server.py`
 
 **Estimated scope:** M
@@ -444,7 +445,7 @@ Add `--queue-db` CLI argument (overrides `config.queue.db_path`).
 
 **Files likely touched:**
 
-- `foreman/__main__.py`
+- `night_brownie/__main__.py`
 - `tests/test_main.py`
 
 **Estimated scope:** S
@@ -486,14 +487,14 @@ Test the drain loop by injecting a mocked `drain_completed()` return and verifyi
 
 ### Phase 5: Agent Update
 
-#### Task 14: Update reference agent to use `ForemanClient`
+#### Task 14: Update reference agent to use `NightBrownieClient`
 
-**Description:** Rewrite `agents/issue-triage/issue_triage/agent.py` to use `ForemanClient`.
+**Description:** Rewrite `agents/issue-triage/issue_triage/agent.py` to use `NightBrownieClient`.
 The `POST /task` endpoint now accepts `{"task_id": "<uuid>"}`, returns 202 immediately,
 and fires an asyncio background task that calls `client.next_task()`, processes it, and calls `client.complete_task()`.
 
-Remove the inline `TaskMessage` / `DecisionMessage` model definitions (they came from `foremanclient.models`).
-Add `foreman-client` as a runtime dependency in the agent's `pyproject.toml`.
+Remove the inline `TaskMessage` / `DecisionMessage` model definitions (they came from `night_brownie_client.models`).
+Add `night-brownie-client` as a runtime dependency in the agent's `pyproject.toml`.
 
 Add a startup poll: on `@app.on_event("startup")`
 (or lifespan), call `client.next_task()` to pick up any tasks queued while the agent was down.
@@ -504,7 +505,7 @@ Add a startup poll: on `@app.on_event("startup")`
 - [x] Background task calls `client.next_task()` and `client.complete_task()`
 - [x] Startup poll calls `client.next_task()` once on boot
 - [x] Agent no longer defines its own `TaskMessage` / `DecisionMessage` models
-- [x] `foreman-client` appears in `agents/issue-triage/pyproject.toml` dependencies
+- [x] `night-brownie-client` appears in `agents/issue-triage/pyproject.toml` dependencies
 - [x] `GET /health` is unchanged
 
 **Verification:**
@@ -524,7 +525,7 @@ Add a startup poll: on `@app.on_event("startup")`
 #### Task 15: Tests for updated reference agent
 
 **Description:** Update `tests/test_agent_server.py` to reflect the new 202 response
-and mock `ForemanClient` at the boundary.
+and mock `NightBrownieClient` at the boundary.
 Test startup poll behaviour.
 
 **Acceptance criteria:**
@@ -550,24 +551,24 @@ Test startup poll behaviour.
 ### Checkpoint: Phase 5
 
 - [x] `uv run pytest --agent-digest=term` — full suite passes (261 tests)
-- [x] Reference agent uses `ForemanClient`; no inline protocol models remain
+- [x] Reference agent uses `NightBrownieClient`; no inline protocol models remain
 - [x] Human review before proceeding
 
 ### Phase 6: Documentation and Integration
 
 #### Task 16: Write `docs/how-to/write-an-agent.md`
 
-**Description:** Agent author guide covering: installing `foreman-client`, the three-method API
+**Description:** Agent author guide covering: installing `night-brownie-client`, the three-method API
 (`next_task`, `complete_task`, `heartbeat`),
 heartbeat requirements (every 30 s during long LLM calls), idempotency contract
-(`task_id` as idempotency key), and a minimal working example using `ForemanClient`.
+(`task_id` as idempotency key), and a minimal working example using `NightBrownieClient`.
 
 **Acceptance criteria:**
 
-- [x] Covers: install, `ForemanClient.__init__` args, `next_task()`, `complete_task()`, `heartbeat()`
+- [x] Covers: install, `NightBrownieClient.__init__` args, `next_task()`, `complete_task()`, `heartbeat()`
 - [x] Explains claim timeout and heartbeat cadence requirement
 - [x] Explains idempotency: what to do if `next_task()` returns an already-processed task
-- [x] Includes a ≤30-line end-to-end example agent using `ForemanClient`
+- [x] Includes a ≤30-line end-to-end example agent using `NightBrownieClient`
 - [x] Doc is in `docs/howtos/write-an-agent.md` (project uses `howtos/` convention)
 
 **Verification:**
@@ -630,10 +631,10 @@ restart it, assert the task reaches `status=done` in `queue.db`.
 | Risk                                                     | Impact | Mitigation                                                                                                                                            |
 |----------------------------------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
 | SQLite concurrency under concurrent claim                | High   | Use `BEGIN IMMEDIATE` transaction in `claim_next()` — SQLite serialises writes, preventing double-claim                                               |
-| `foreman-client` endpoint contract diverges from harness | High   | Define request/response Pydantic models in `foreman/routers/queue.py` and reference them in `foremanclient/models.py` (or keep them in sync manually) |
+| `night-brownie-client` endpoint contract diverges from harness | High   | Define request/response Pydantic models in `night_brownie/routers/queue.py` and reference them in `night_brownie_client/models.py` (or keep them in sync manually) |
 | Drain loop misses a completed task                       | Medium | Background poll every 10 s is the safety net; `/harness/result` nudge is the fast path                                                                |
 | Agent processes same task twice after restart            | Medium | `task_id` idempotency key in `action_log` (existing invariant, preserved)                                                                             |
-| `foreman-client` is sync but agent is async              | Low    | `httpx` supports both sync and async; document that authors should use `asyncio.to_thread()` if calling from async context                            |
+| `night-brownie-client` is sync but agent is async              | Low    | `httpx` supports both sync and async; document that authors should use `asyncio.to_thread()` if calling from async context                            |
 
 ## Out of Scope (MVP)
 

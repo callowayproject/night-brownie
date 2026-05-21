@@ -4,14 +4,15 @@
 
 | Aspect             | Value                                                                                                                                                                 |
 |--------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **PR Goal**        | Implement a complete queue-mediated agent protocol: SQLite task queue, HTTP endpoints, `foreman-client` SDK, background drain/requeue loops, agent restart resilience |
+| **PR Goal**        | Implement a complete queue-mediated agent protocol: SQLite task queue, HTTP endpoints, `night-brownie-client` SDK, background drain/requeue loops, agent restart resilience |
 | **Files Changed**  | 41 (4,781 additions / 714 deletions)                                                                                                                                  |
 | **Risk Level**     | 🟡 MEDIUM — core queue mechanics and test coverage are solid; two structural bugs in the drain pipeline need attention before shipping                                |
 | **Review Effort**  | 4/5 — six implementation phases spanning new package, background loops, agent protocol, integration test, and documentation                                           |
 | **Recommendation** | 🔄 REQUEST CHANGES                                                                                                                                                    |
 
-**Affected Areas**: `foreman/queue.py`, `foreman/server.py`, `foreman/routers/queue.py`, `foreman/routers/result.py`,
-`foreman/__main__.py`, `foreman-client/`, `agents/issue-triage/issue_triage/agent.py`, `tests/test_integration.py`
+**Affected Areas**: `night_brownie/queue.py`, `night_brownie/server.py`, `night_brownie/routers/queue.py`,
+`night_brownie/routers/result.py`, `night_brownie/__main__.py`, `night-brownie-client/`,
+`agents/issue-triage/issue_triage/agent.py`, `tests/test_integration.py`
 
 **Business Impact**: This PR enables the zero-task-loss guarantee that is the MVP acceptance criterion.
 The queue, client SDK, and integration test are well-constructed.
@@ -46,7 +47,7 @@ Agent startup polls the queue on boot for resilience.
 
 ### 🐛 #1: `_drain_loop` crashes permanently on any executor or DB exception
 
-**Location:** `foreman/server.py:131-149`
+**Location:** `night_brownie/server.py:131-149`
 
 **Confidence:** ✅ HIGH
 
@@ -63,7 +64,7 @@ If the drain task crashed earlier with (e.g.) `sqlite3.OperationalError`,
 the re-raise propagates out of the `contextlib.suppress(asyncio.CancelledError)` guard and can disrupt clean shutdown.
 
 ```diff
-# foreman/server.py — inside _drain_loop while loop
+# night_brownie/server.py — inside _drain_loop while loop
      drain_event.clear()
 
 -    pairs = task_queue.drain_completed()
@@ -89,7 +90,7 @@ the re-raise propagates out of the `contextlib.suppress(asyncio.CancelledError)`
 +    except Exception:
 +        logger.exception("Drain loop: unexpected error, continuing")
 
-# foreman/server.py — _lifespan finally block
+# night_brownie/server.py — _lifespan finally block
 -    with contextlib.suppress(asyncio.CancelledError):
 -        await drain_task
 +    with contextlib.suppress(asyncio.CancelledError, Exception):
@@ -100,7 +101,7 @@ the re-raise propagates out of the `contextlib.suppress(asyncio.CancelledError)`
 
 ### 🐛 #2: `drain_completed` marks tasks `done` before executing actions — executor failures silently drop GitHub actions
 
-**Location:** `foreman/queue.py:179-183`, `foreman/server.py:138-146` | **Confidence:** ✅ HIGH
+**Location:** `night_brownie/queue.py:179-183`, `night_brownie/server.py:138-146` | **Confidence:** ✅ HIGH
 
 `drain_completed()` atomically updates all completed rows to `done`
 and commits to SQLite **before** returning the list to the caller.
@@ -113,7 +114,7 @@ Combined with issue #1 (the loop then crashes), one bad executor call causes bot
 The fix is to move the `done` transition to after a successful execute, on a per-task basis:
 
 ```diff
-# foreman/queue.py — drain_completed: remove batch UPDATE/commit
+# night_brownie/queue.py — drain_completed: remove batch UPDATE/commit
  def drain_completed(self) -> list[tuple[TaskMessage, DecisionMessage]]:
      rows = self._conn.execute(
          "SELECT task_id, payload, result FROM task_queue WHERE status = 'completed'"
@@ -141,7 +142,7 @@ The fix is to move the `done` transition to after a successful execute, on a per
 +    self._conn.execute("UPDATE task_queue SET status = 'done' WHERE task_id = ?", (task_id,))
 +    self._conn.commit()
 
-# foreman/server.py — _drain_loop: call mark_done per task, after execute succeeds
+# night_brownie/server.py — _drain_loop: call mark_done per task, after execute succeeds
      for task, decision in pairs:
          issue_number: int = task.payload.get("number", 0)
          executor.execute(decision, repo=task.repo, issue_number=issue_number, task_type=task.type)
@@ -191,7 +192,7 @@ A second test covering N>1 pending tasks would guard this path.
 
 ### 🐛 #4: `_requeue_loop` has the same no-exception-handling problem as `_drain_loop`
 
-**Location:** `foreman/server.py:163-168` | **Confidence:** ✅ HIGH
+**Location:** `night_brownie/server.py:163-168` | **Confidence:** ✅ HIGH
 
 If `task_queue.requeue_stale()` or `task_queue.fail_exhausted()` raises,
 the requeue loop exits `while True` and dies permanently.
@@ -199,7 +200,7 @@ Stale claimed tasks are never recycled; exhausted tasks are never failed.
 The same shutdown re-raise risk applies.
 
 ```diff
-# foreman/server.py — inside _requeue_loop while loop
+# night_brownie/server.py — inside _requeue_loop while loop
      while True:
          await asyncio.sleep(config.queue.requeue_interval_seconds)
 -        requeued = task_queue.requeue_stale()
@@ -212,7 +213,7 @@ The same shutdown re-raise risk applies.
 +        except Exception:
 +            logger.exception("Requeue loop: unexpected error, continuing")
 
-# foreman/server.py — _lifespan finally block (same fix as #1)
+# night_brownie/server.py — _lifespan finally block (same fix as #1)
 -    with contextlib.suppress(asyncio.CancelledError):
 -        await requeue_task
 +    with contextlib.suppress(asyncio.CancelledError, Exception):
@@ -227,7 +228,7 @@ The same shutdown re-raise risk applies.
 
 ### 🏗️ #5: Private attribute accessed across module boundary
 
-**Location:** `foreman/__main__.py:167` | **Confidence:** ✅ HIGH
+**Location:** `night_brownie/__main__.py:167` | **Confidence:** ✅ HIGH
 
 `app.state.executor = dispatcher._executor` reaches into `Dispatcher`'s private state.
 If the attribute is renamed, this silently becomes `AttributeError` at runtime
@@ -235,11 +236,11 @@ If the attribute is renamed, this silently becomes `AttributeError` at runtime
 Expose it via a public attribute or property.
 
 ```diff
-# foreman/server.py — Dispatcher.__init__
+# night_brownie/server.py — Dispatcher.__init__
 -    self._executor = GitHubExecutor(token=str(config.identity.github_token), memory=memory)
 +    self.executor = GitHubExecutor(token=str(config.identity.github_token), memory=memory)
 
-# foreman/__main__.py
+# night_brownie/__main__.py
 -    app.state.executor = dispatcher._executor
 +    app.state.executor = dispatcher.executor
 ```
@@ -259,7 +260,7 @@ The docs show the heartbeat-thread pattern; the reference implementation should 
 # agents/issue-triage/issue_triage/agent.py
 +import threading
 +
- async def _process_task(client: ForemanClient, task: TaskMessage) -> None:
+ async def _process_task(client: NightBrownieClient, task: TaskMessage) -> None:
 -    decision = await asyncio.to_thread(triage, task)
 +    stop = threading.Event()
 +
@@ -282,20 +283,20 @@ The docs show the heartbeat-thread pattern; the reference implementation should 
 
 **Location:** `docs/howtos/write-an-agent.md:125-156` | **Confidence:** ✅ HIGH
 
-The 30-line "Minimal Working Example" instantiates `ForemanClient` at module level and has no lifespan.
+The 30-line "Minimal Working Example" instantiates `NightBrownieClient` at module level and has no lifespan.
 A reader who copies it verbatim gets an agent without the zero-task-loss recovery path.
 The startup poll section appears later but many readers won't reach it.
 The example should include a minimal lifespan,
 or a note should be added that the example is incomplete for production use.
 
 ```diff
--client = ForemanClient(os.environ["FOREMAN_HARNESS_URL"], os.environ["AGENT_URL"])
+-client = NightBrownieClient(os.environ["NIGHT_BROWNIE_URL"], os.environ["AGENT_URL"])
 -app = FastAPI()
 +from contextlib import asynccontextmanager
 +
 +@asynccontextmanager
 +async def lifespan(app):
-+    client = ForemanClient(os.environ["FOREMAN_HARNESS_URL"], os.environ["AGENT_URL"])
++    client = NightBrownieClient(os.environ["NIGHT_BROWNIE_URL"], os.environ["AGENT_URL"])
 +    app.state.client = client
 +    task = client.next_task()   # startup poll — pick up tasks queued while down
 +    if task:

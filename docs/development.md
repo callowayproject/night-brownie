@@ -1,6 +1,6 @@
 ---
 title: Developer Guide
-summary: Development environment setup, testing, and tooling reference for contributors to Foreman.
+summary: Development environment setup, testing, and tooling reference for contributors to Night Brownie.
 date: 2026-04-21T00:00:00.000000+00:00
 hide:
   - navigation
@@ -99,7 +99,7 @@ These are in `tests/integration/`.
 ## Project Structure
 
 ```text
-foreman/
+night_brownie/
 ├── config.py        # YAML loader and Pydantic config models
 ├── credentials.py   # Environment variable resolution, get_github_token()
 ├── server.py        # FastAPI dispatch loop

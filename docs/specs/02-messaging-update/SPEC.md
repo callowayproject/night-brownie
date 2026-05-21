@@ -14,7 +14,7 @@ queue-mediated protocol so that GitHub events are never silently dropped — eve
 **Target users:**
 
 - **Harness operators** — install Foreman, configure repos; gain reliability without extra ops.
-- **Agent authors** — build new agents; use `foreman-client` instead of implementing
+- **Agent authors** — build new agents; use `night-brownie-client` instead of implementing
   queue management themselves.
 
 **MVP acceptance criterion:** Zero task loss under a simulated agent restart.
@@ -30,9 +30,9 @@ GitHub event
     → queue.py: INSERT task (status=pending) into queue.db
     → Dispatcher nudges agent: POST /task → 202 Accepted  (fire-and-forget)
     → Agent receives nudge (or polls on startup/interval)
-    → foreman-client: next_task() → SELECT + UPDATE status=claimed
+    → night-brownie-client: next_task() → SELECT + UPDATE status=claimed
     → Agent processes task, calls complete_task(task_id, decision)
-    → foreman-client: UPDATE status=completed, result=<DecisionMessage JSON>
+    → night-brownie-client: UPDATE status=completed, result=<DecisionMessage JSON>
     → Agent nudges harness: POST /harness/result → 202 Accepted
     → Harness drain loop picks up completed task
     → executor.py executes actions
@@ -57,7 +57,7 @@ GitHub event
 - **Heartbeat interval** (recommendation for agent authors: **every 30 seconds**):
   Agents doing long LLM calls must call `client.heartbeat(task_id)` at least
   once per 30 seconds to reset the claim timeout clock.
-  The `foreman-client` library will document this requirement prominently.
+  The `night-brownie-client` library will document this requirement prominently.
 
 ## 3. New Components
 
@@ -98,7 +98,7 @@ pending → claimed → completed → done
 
 Max retries: configurable, default **3**.
 
-### 3.2 `foreman/queue.py` — Harness Queue Module
+### 3.2 `night_brownie/queue.py` — Harness Queue Module
 
 Owns all SQLite access for the task queue.
 Public interface:
@@ -129,27 +129,27 @@ class TaskQueue:
     """Mark tasks exceeding max_retries as failed. Returns count."""
 ```
 
-### 3.3 `foreman-client` — Separate PyPI Package
+### 3.3 `night-brownie-client` — Separate PyPI Package
 
 A thin Python library installed by agent authors.
-Lives at `foreman-client/` in this repo (separate `pyproject.toml`).
-Published to PyPI as `foreman-client`.
+Lives at `night-brownie-client/` in this repo (separate `pyproject.toml`).
+Published to PyPI as `night-brownie-client`.
 
 **Directory structure:**
 
 ```text
-foreman-client/
+night-brownie-client/
 ├── pyproject.toml
-└── foremanclient/
+└── night_brownie_client/
     ├── __init__.py
-    ├── client.py       # ForemanClient
+    ├── client.py       # NightBrownieClient
     └── models.py       # Re-exported Pydantic models (TaskMessage, DecisionMessage)
 ```
 
 **Public API:**
 
 ```python
-class ForemanClient:
+class NightBrownieClient:
     def __init__(self, harness_url: str, agent_url: str) -> None: ...
     """
     Args:
@@ -189,7 +189,7 @@ Request body: {"task_id": "<uuid>"}
 Response:     202 Accepted
 ```
 
-Added in `foreman/routers/result.py`.
+Added in `night_brownie/routers/result.py`.
 On receipt, the harness drain loop is triggered immediately (in addition to its background schedule).
 
 ### 3.5 Harness Background Tasks
@@ -239,19 +239,19 @@ Commit fully to the queue to avoid split-brain between what the queue thinks hap
 
 **Migration steps (in implementation order):**
 
-1. Implement `foreman/queue.py` and `queue.db` schema.
-2. Implement `foreman-client` package with tests.
+1. Implement `night_brownie/queue.py` and `queue.db` schema.
+2. Implement `night-brownie-client` package with tests.
 3. Add `POST /harness/result` endpoint to harness.
 4. Refactor `Dispatcher.dispatch()` to enqueue + nudge.
 5. Add drain and requeue background loops to harness lifespan.
-6. Update the reference agent (`agents/issue-triage/agent.py`) to use `ForemanClient`.
+6. Update the reference agent (`agents/issue-triage/agent.py`) to use `NightBrownieClient`.
 7. Delete the synchronous response-parsing block from `Dispatcher.dispatch()`.
 8. Remove `response.status_code != 200` error handling (no longer applicable).
 
 ## 6. Project Structure After Change
 
 ```text
-foreman/
+night_brownie/
 ├── queue.py            # NEW: TaskQueue class (queue.db access)
 ├── routers/
 │   └── result.py       # NEW: POST /harness/result nudge endpoint
@@ -259,15 +259,15 @@ foreman/
 ├── config.py           # MODIFIED: QueueConfig Pydantic model added
 └── ... (unchanged)
 
-foreman-client/         # NEW: separate package
+night-brownie-client/         # NEW: separate package
 ├── pyproject.toml
-└── foremanclient/
+└── night_brownie_client/
     ├── __init__.py
     ├── client.py
     └── models.py
 
 agents/issue-triage/
-└── agent.py            # MODIFIED: uses ForemanClient instead of sync response
+└── agent.py            # MODIFIED: uses NightBrownieClient instead of sync response
 
 docs/
 └── specs/02-messaging-update/
@@ -288,12 +288,12 @@ Inherits all project conventions from `CLAUDE.md`:
 - **Docstrings:** interrogate (≥90% coverage), pydoclint (Google style)
 - **Type hints:** required on all public functions and methods
 - **Python minimum:** 3.12
-- **`foreman-client`** follows the same conventions; its `pyproject.toml`
+- **`night-brownie-client`** follows the same conventions; its `pyproject.toml`
   mirrors the tooling configuration from the main project.
 
 ## 8. Testing Strategy
 
-### 8.1 `foreman/queue.py`
+### 8.1 `night_brownie/queue.py`
 
 - Use a real temp-file SQLite DB via `pytest tmp_path` (never mock SQLite).
 - Test each status transition: pending → claimed → completed → done.
@@ -302,7 +302,7 @@ Inherits all project conventions from `CLAUDE.md`:
 - Test concurrent claim (two threads calling `claim_next()` simultaneously) —
   only one should receive the task.
 
-### 8.2 `foreman-client`
+### 8.2 `night-brownie-client`
 
 - Unit tests with a mock harness server (use `httpx.MockTransport` or `respx`).
 - Test `next_task()` when queue empty returns `None`.
@@ -330,7 +330,7 @@ Inherits all project conventions from `CLAUDE.md`:
 
 ### 8.5 Coverage Target
 
-≥85% line / ≥80% branch for `foreman/queue.py` and `foremanclient/client.py`.
+≥85% line / ≥80% branch for `night_brownie/queue.py` and `night_brownie_client/client.py`.
 
 ## 9. Boundaries
 
@@ -351,7 +351,7 @@ Inherits all project conventions from `CLAUDE.md`:
 - Store raw secrets in `queue.db` or task payloads (GitHub tokens must not appear in `payload`).
 - Execute shell commands or arbitrary code from task payloads.
 - Let agent containers access `queue.db` directly — all queue I/O goes through
-  `foreman-client` ↔ harness API (the harness owns the database file).
+  `night-brownie-client` ↔ harness API (the harness owns the database file).
 - Add a synchronous dispatch fallback path.
 - Expose `GET /queue/status` in MVP — structured log output only.
 
@@ -365,6 +365,6 @@ Inherits all project conventions from `CLAUDE.md`:
 
 ## 11. Documentation Task
 
-The plan phase must include a task to produce `docs/how-to/write-an-agent.md` covering the `foreman-client` API,
-heartbeat requirements, idempotency contract, and a minimal agent example using `ForemanClient`.
+The plan phase must include a task to produce `docs/how-to/write-an-agent.md` covering the `night-brownie-client` API,
+heartbeat requirements, idempotency contract, and a minimal agent example using `NightBrownieClient`.
 This doc is the primary reference for agent authors.
