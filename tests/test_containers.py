@@ -279,7 +279,7 @@ class TestContainerRestartOnExit:
         mocker.patch.object(mgr, "_wait_for_health", return_value=None)
         mgr.start_agent("issue-triage", image="night-brownie-issue-triage:latest", port=9001)
 
-        mock_logger = mocker.patch("night_brownie.containers.logger")
+        mock_logger = mocker.patch("night_brownie.containers.manager.logger")
 
         mgr.handle_container_exit("issue-triage", image="night-brownie-issue-triage:latest", port=9001)
 
@@ -299,7 +299,7 @@ class TestContainerRestartOnExit:
         mocker.patch.object(mgr, "_wait_for_health", return_value=None)
         mgr.start_agent("issue-triage", image="night-brownie-issue-triage:latest", port=9001)
 
-        mocker.patch("night_brownie.containers.logger")
+        mocker.patch("night_brownie.containers.manager.logger")
 
         # First exit → restart
         mgr.handle_container_exit("issue-triage", image="night-brownie-issue-triage:latest", port=9001)

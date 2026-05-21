@@ -95,6 +95,9 @@ include = ["docs/*.md", "README.md"]
 respect-gitignore = true
 flavor = "mkdocs"
 
+[tool.rumdl.MD046]
+style = "fenced"
+
 [tool.rumdl.MD063]
 style = "sentence_case"
 

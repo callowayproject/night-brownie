@@ -10,11 +10,9 @@ import docker.models.containers
 import httpxyz
 import structlog
 
+from night_brownie.containers.base import ContainerError
+
 logger = structlog.get_logger(__name__)
-
-
-class ContainerError(Exception):
-    """Raised when a container operation fails."""
 
 
 class ContainerManager:
