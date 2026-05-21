@@ -6,28 +6,28 @@ date: 2026-04-21T00:00:00.000000+00:00
 
 # CLI Reference
 
-Foreman is invoked via the `foreman` command installed by the package.
+Foreman is invoked via the `night-brownie` command installed by the package.
 
 ```text
-foreman <command> [options]
+night-brownie <command> [options]
 ```
 
 ## Commands
 
-| Command                   | Description               |
-|---------------------------|---------------------------|
-| [`start`](#foreman-start) | Start the Foreman harness |
+| Command                         | Description         |
+|---------------------------------|---------------------|
+| [`start`](#night-brownie-start) | Start Night Brownie |
 
-## `foreman start`
+## `night-brownie start`
 
 Start the Foreman harness: load configuration, initialize the memory database, start any configured agent containers,
 then run the GitHub poller and internal HTTP server concurrently.
 
 ```text
-foreman start --config <CONFIG> [--db <DB_PATH>] [--host <HOST>] [--port <PORT>]
+night-brownie start --config <CONFIG> [--db <DB_PATH>] [--host <HOST>] [--port <PORT>]
 ```
 
-Foreman runs until interrupted (SIGINT or SIGTERM).
+Night Brownie runs until interrupted (SIGINT or SIGTERM).
 On shutdown, it cancels the poller and stops any containers it started.
 
 ### Options
@@ -44,24 +44,24 @@ On shutdown, it cancels the poller and stops any containers it started.
 Start with a config file in the current directory:
 
 ```bash
-foreman start --config config.yaml
+night-brownie start --config config.yaml
 ```
 
 Store the memory database in a custom location:
 
 ```bash
-foreman start --config config.yaml --db /var/lib/foreman/memory.db
+night-brownie start --config config.yaml --db /var/lib/night-brownie/memory.db
 ```
 
 Bind only to localhost and use a non-default port:
 
 ```bash
-foreman start --config config.yaml --host 127.0.0.1 --port 9000
+night-brownie start --config config.yaml --host 127.0.0.1 --port 9000
 ```
 
 ### Startup Sequence
 
-When `foreman` starts running, it performs these steps in order:
+When `night-brownie` starts running, it performs these steps in order:
 
 1. Load and validate the configuration file.
     Exits with a clear error message if the file is missing, the YAML is invalid, a required field is absent,

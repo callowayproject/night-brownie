@@ -1,1 +1,1 @@
-::: foreman.config
+::: night_brownie.config

@@ -1,36 +1,36 @@
 ---
 title: Write an Agent
-summary: How to build a Foreman-compatible agent using the foreman-client SDK.
+summary: How to build a Night Brownie-compatible agent using the night-brownie-client SDK.
 date: 2026-05-04
 ---
 
 # Write an Agent
 
-This guide walks you through building a Foreman-compatible agent from scratch.
+This guide walks you through building a Night Brownie-compatible agent from scratch.
 Agents are HTTP services that receive task nudges from the harness, claim the task from the queue, process it,
-and report a decision back — all via `ForemanClient`.
+and report a decision back — all via `NightBrownie`.
 
 ## Prerequisites
 
 - Python 3.12+
-- A running Foreman harness (see [Installation](../tutorials/installation.md))
+- A running Night Brownie harness (see [Installation](../tutorials/installation.md))
 - `uv` or `pip` for package management
 
-## Install `foreman-client`
+## Install `night-brownie-client`
 
 ```bash
-uv add foreman-client
+uv add night-brownie-client
 # or
-pip install foreman-client
+pip install night-brownie-client
 ```
 
-`foreman-client` has two runtime dependencies: `httpx` and `pydantic>=2`.
+`night-brownie-client` has two runtime dependencies: `httpxyz` and `pydantic>=2`.
 
 ## The Three-Method API
 
-`ForemanClient` exposes exactly three methods an agent needs.
+`NightBrownieClient` exposes exactly three methods an agent needs.
 
-### `ForemanClient(harness_url, agent_url)`
+### `NightBrownieClient(harness_url, agent_url)`
 
 | Argument      | Type  | Description                                                                       |
 |---------------|-------|-----------------------------------------------------------------------------------|
@@ -40,7 +40,7 @@ pip install foreman-client
 Use it as a context manager to ensure the HTTP connection pool is closed on exit:
 
 ```python
-with ForemanClient(harness_url="http://localhost:8000", agent_url="http://localhost:9001") as client:
+with NightBrownieClient(harness_url="http://localhost:8000", agent_url="http://localhost:9001") as client:
     ...
 ```
 
@@ -48,7 +48,7 @@ with ForemanClient(harness_url="http://localhost:8000", agent_url="http://localh
 
 Claims and returns the next pending task from the harness queue.
 Returns `None` when the queue is empty (harness responds `204 No Content`).
-Raises `ForemanClientError` on any non-2xx response.
+Raises `NightBrownieClientError` on any non-2xx response.
 
 ```python
 task = client.next_task()
@@ -71,7 +71,7 @@ Call this once per task, after all processing is done.
 > the harness will not raise an error, but the drain loop will not find the intended result.
 
 ```python
-from foremanclient import DecisionMessage, DecisionType
+from night_brownie_client import DecisionMessage, DecisionType
 
 decision = DecisionMessage(
     task_id=task.task_id,
@@ -134,7 +134,7 @@ while the agent was down are claimed immediately on startup (see [Startup Poll](
 import os
 from contextlib import asynccontextmanager
 from fastapi import BackgroundTasks, FastAPI
-from foremanclient import DecisionMessage, DecisionType, ForemanClient
+from night_brownie import DecisionMessage, DecisionType, NightBrownieClient
 from pydantic import BaseModel
 
 def _decide(task):
@@ -149,7 +149,7 @@ def _run(client):
 
 @asynccontextmanager
 async def lifespan(app):
-    client = ForemanClient(os.environ["FOREMAN_HARNESS_URL"], os.environ["AGENT_URL"])
+    client = NightBrownieClient(os.environ["NIGHT_BROWNIE_URL"], os.environ["AGENT_URL"])
     # Drain any tasks queued while the agent was down
     while True:
         task = client.next_task()
@@ -178,7 +178,7 @@ async def handle_task(nudge: TaskNudge, background_tasks: BackgroundTasks):
 Run it with:
 
 ```bash
-FOREMAN_HARNESS_URL=http://localhost:8000 AGENT_URL=http://localhost:9001 uvicorn myagent:app --port 9001
+NIGHT_BROWNIE_URL=http://localhost:8000 AGENT_URL=http://localhost:9001 uvicorn myagent:app --port 9001
 ```
 
 ## Required Endpoints
@@ -203,7 +203,7 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def lifespan(app):
-    client = ForemanClient(...)
+    client = NightBrownieClient(...)
     while True:
         task = client.next_task()
         if task is None:

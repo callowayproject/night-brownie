@@ -1,1 +1,1 @@
-::: foreman.llm.ollama
+::: night_brownie.llm.ollama

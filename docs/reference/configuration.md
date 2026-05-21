@@ -105,7 +105,7 @@ repos:
       - type: issue-triage
         allow_close: false
         config:
-          image: "foreman-issue-triage:latest"
+          image: "night-brownie-issue-triage:latest"
           port: 9001
 ```
 
@@ -140,14 +140,14 @@ Use this mode when you want Foreman to own the container lifecycle.
 
 Both `image` and `port` are required for this mode.
 
-| Field   | Type    | Required        | Description                                                  |
-| ------- | ------- | --------------- | ------------------------------------------------------------ |
-| `image` | string  | Yes (this mode) | Docker image name and tag to run (e.g., `foreman-issue-triage:latest`). |
-| `port`  | integer | Yes (this mode) | Host port to bind to container port `8000`. Must be free on the host. |
+| Field   | Type    | Required        | Description                                                                   |
+|---------|---------|-----------------|-------------------------------------------------------------------------------|
+| `image` | string  | Yes (this mode) | Docker image name and tag to run (e.g., `night-brownie-issue-triage:latest`). |
+| `port`  | integer | Yes (this mode) | Host port to bind to container port `8000`. Must be free on the host.         |
 
 ```yaml
 config:
-  image: "foreman-issue-triage:latest"
+  image: "night-brownie-issue-triage:latest"
   port: 9001
 ```
 
@@ -202,7 +202,7 @@ repos:
       - type: issue-triage
         allow_close: false
         config:
-          image: "foreman-issue-triage:latest"
+          image: "night-brownie-issue-triage:latest"
           port: 9001
           stale_days: 30
           labels:

@@ -12,5 +12,5 @@ and the message protocol between the harness and agent containers.
 | Document                            | Description                                                                             |
 |-------------------------------------|-----------------------------------------------------------------------------------------|
 | [Configuration](configuration.md)   | Complete YAML configuration schema — all fields, types, defaults, and examples          |
-| [CLI](cli.md)                       | `foreman` command-line reference — commands, options, and exit codes                    |
+| [CLI](cli.md)                       | `night-brownie` command-line reference — commands, options, and exit codes              |
 | [Agent Protocol](agent-protocol.md) | Harness↔agent message contract — `TaskMessage`, `DecisionMessage`, and all action types |

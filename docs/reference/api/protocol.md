@@ -1,1 +1,1 @@
-::: foreman.protocol
+::: night_brownie.protocol

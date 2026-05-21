@@ -1,1 +1,1 @@
-::: foreman.llm.anthropic
+::: night_brownie.llm.anthropic

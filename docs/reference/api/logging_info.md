@@ -1,1 +1,1 @@
-::: foreman.logging_info
+::: night_brownie.logging_info

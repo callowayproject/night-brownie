@@ -1,1 +1,1 @@
-::: foreman.memory
+::: night_brownie.memory

@@ -1,1 +1,1 @@
-::: foreman.settings
+::: night_brownie.settings

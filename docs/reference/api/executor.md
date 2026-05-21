@@ -1,1 +1,1 @@
-::: foreman.executor
+::: night_brownie.executor
