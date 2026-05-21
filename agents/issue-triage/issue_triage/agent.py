@@ -32,7 +32,7 @@ def _get_client(application: FastAPI) -> NightBrownieClient:
     """
     if not hasattr(application.state, "client"):
         application.state.client = NightBrownieClient(
-            harness_url=os.environ["FOREMAN_HARNESS_URL"],
+            harness_url=os.environ["NIGHT_BROWNIE_URL"],
             agent_url=os.environ["AGENT_URL"],
         )
     return application.state.client

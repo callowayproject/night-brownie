@@ -22,8 +22,8 @@ ENV UV_TOOL_BIN_DIR=/usr/local/bin
 
 # Install the project's dependencies using the lockfile and settings
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=uv.lock,target=uv.lock,relabel=shared \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml,relabel=shared \
     uv sync --locked --no-install-project
 
 # Then, add the rest of the project source code and install it
@@ -43,4 +43,4 @@ USER nonroot
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "agent:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "issue_triage.agent:app", "--host", "0.0.0.0", "--port", "8000"]

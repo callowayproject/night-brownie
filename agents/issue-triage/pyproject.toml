@@ -8,11 +8,7 @@ version = "0.1.0"
 description = "Issue triage agent for the Night Brownie AI harness"
 requires-python = ">=3.12"
 
-[tool.hatch.build.targets.wheel]
-packages = ["issue_triage"]
-
-[project.optional-dependencies]
-runtime = [
+dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "pydantic>=2.0",
@@ -21,5 +17,6 @@ runtime = [
     "night-brownie-client>=0.1.0",
     "structlog>=25.5.0",
 ]
-[tool.uv.sources]
-night-brownie-client = { path = "../../night-brownie-client" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["issue_triage"]
