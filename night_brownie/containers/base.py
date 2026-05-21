@@ -92,6 +92,16 @@ def backend_from_config(config: ContainersConfig) -> ContainerBackend:
         A concrete :class:`ContainerBackend` instance.
 
     Raises:
-        NotImplementedError: Always — backends are wired in later phases.
+        ContainerError: If the backend value is unrecognised.
     """
-    raise NotImplementedError(f"backend_from_config not yet implemented for {config.backend!r}")
+    if config.backend == "docker":
+        from night_brownie.containers.docker import DockerBackend
+
+        return DockerBackend(socket_url=config.socket_url)
+
+    if config.backend == "podman":
+        from night_brownie.containers.podman import PodmanBackend
+
+        return PodmanBackend(socket_url=config.socket_url)
+
+    raise ContainerError(f"Unsupported container backend: {config.backend!r}")

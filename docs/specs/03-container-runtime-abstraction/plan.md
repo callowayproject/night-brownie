@@ -31,8 +31,8 @@ Breaking changes in the refactor:
 **Goal:** Create the `containers/` package with the `ContainerBackend` ABC, `ContainerError`, and factory.
 The old `containers.py` stays intact; nothing breaks yet.
 
-- [ ] Create directory `night_brownie/containers/`
-- [ ] Write `night_brownie/containers/base.py`:
+- [x] Create directory `night_brownie/containers/`
+- [x] Write `night_brownie/containers/base.py`:
     - `ContainerError(Exception)`
     - `ContainerBackend` ABC with five abstract methods: `image_exists`, `pull_image`, `run_container`,
       `stop_container`, `get_logs`
@@ -40,15 +40,15 @@ The old `containers.py` stays intact; nothing breaks yet.
       `socket_url: str | None = None`
     - `backend_from_config(config: ContainersConfig) -> ContainerBackend` factory stub
       (raises `NotImplementedError` for now)
-- [ ] Write `night_brownie/containers/__init__.py`:
+- [x] Write `night_brownie/containers/__init__.py`:
     - Re-exports: `ContainerManager`, `ContainerError`, `ContainerBackend`
-    - Import `ContainerManager` from `.manager` (file created in Phase 4)
-- [ ] Delete `night_brownie/containers.py` and replace with the package
+    - Import `ContainerManager` from `.manager` (moved early — RUF067 requires **init** be re-exports only)
+- [x] Delete `night_brownie/containers.py` and replace with the package
 
 **Acceptance criteria:**
 
-- [ ] `from night_brownie.containers import ContainerError, ContainerBackend` works
-- [ ] `uv run pytest --agent-digest=term --no-cov` passes
+- [x] `from night_brownie.containers import ContainerError, ContainerBackend` works
+- [x] `uv run pytest --agent-digest=term --no-cov` passes
     (existing tests still import `ContainerManager` and `ContainerError`)
 
 ---
@@ -57,7 +57,7 @@ The old `containers.py` stays intact; nothing breaks yet.
 
 **Goal:** Extract Docker SDK logic into `DockerBackend`; add `PodmanBackend` thin subclass.
 
-- [ ] Write `night_brownie/containers/docker.py`:
+- [x] Write `night_brownie/containers/docker.py`:
     - `DockerBackend(ContainerBackend)` — extracted from current `containers.py`
     - `__init__(self, socket_url: str | None = None)` —
       calls `docker.DockerClient(base_url=socket_url)` or `docker.from_env()`;
@@ -68,12 +68,12 @@ The old `containers.py` stays intact; nothing breaks yet.
       `detach=True, ports={"8000/tcp": port}, name=name, remove=True, environment=environment`; returns `container.id`
     - `stop_container` — `client.containers.get(handle).stop()`
     - `get_logs` — `client.containers.get(handle).logs()` → `bytes`
-- [ ] Write `night_brownie/containers/podman.py`:
+- [x] Write `night_brownie/containers/podman.py`:
     - `PodmanBackend(DockerBackend)` — `_DEFAULT_SOCKET = "unix:///run/user/{uid}/podman/podman.sock"`
     - `__init__(self, socket_url: str | None = None)` — fills in uid-based default;
       calls `super().__init__(socket_url=url)`
-- [ ] Wire backends into `backend_from_config` in `base.py`
-- [ ] Write `tests/test_docker_backend.py`:
+- [x] Wire backends into `backend_from_config` in `base.py`
+- [x] Write `tests/test_docker_backend.py`:
     - Mock `docker.from_env` / `docker.DockerClient`
     - `TestDockerBackendInit` — socket unavailable → `ContainerError`; `socket_url` → uses `DockerClient`;
       no args → uses `from_env`
@@ -83,16 +83,16 @@ The old `containers.py` stays intact; nothing breaks yet.
       (detach, ports, name, remove, environment); returns `container.id`
     - `TestDockerBackendStopContainer` — calls `client.containers.get(handle).stop()`
     - `TestDockerBackendGetLogs` — returns `bytes`
-- [ ] Write `tests/test_podman_backend.py`:
+- [x] Write `tests/test_podman_backend.py`:
     - Inherits from Docker tests or patches at the same level
     - Asserts default socket includes uid when no `socket_url` provided
     - Asserts explicit `socket_url` is passed through
 
 **Acceptance criteria:**
 
-- [ ] All `test_docker_backend.py` tests pass
-- [ ] All `test_podman_backend.py` tests pass
-- [ ] `uv run pytest --agent-digest=term --no-cov` still passes overall
+- [x] All `test_docker_backend.py` tests pass
+- [x] All `test_podman_backend.py` tests pass
+- [x] `uv run pytest --agent-digest=term --no-cov` still passes overall
 
 ---
 
