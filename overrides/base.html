@@ -185,12 +185,14 @@
                              data-md-component="sidebar"
                              data-md-type="navigation"
                              {{ hidden }}>
-                            <div class="md-sidebar__scrollwrap">
-                                <div class="md-sidebar__inner">
-                                    {% include "partials/nav.html" %}
+                            {% include "partials/nav-new.html" %}
 
-                                </div>
-                            </div>
+                            {#                            <div class="md-sidebar__scrollwrap">#}
+                            {#                                <div class="md-sidebar__inner">#}
+                            {#                                    {% include "partials/nav.html" %}#}
+                            {##}
+                            {#                                </div>#}
+                            {#                            </div>#}
                         </div>
                     {% endif %}
                     <!-- Page content container -->

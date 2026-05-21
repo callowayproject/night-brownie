@@ -373,6 +373,9 @@ combine_header_slug = true
 custom_checkbox = true
 [project.markdown_extensions.pymdownx.tilde]
 
+[project.plugins.mkdocstrings]
+custom_templates = "overrides"
+
 [project.plugins.mkdocstrings.handlers.python]
 #inventories = ["https://docs.python.org/3/objects.inv"]
 
