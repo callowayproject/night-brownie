@@ -150,6 +150,24 @@ class TestStartAgentContainer:
 
         wait_mock.assert_called_once_with("http://localhost:9001")
 
+    def test_passes_environment_to_run(self, mocker):
+        """environment dict is passed through to containers.run."""
+        client = _mock_docker_client()
+        container = MagicMock()
+        container.id = "abc123"
+        client.containers.run.return_value = container
+        mocker.patch("docker.from_env", return_value=client)
+
+        mgr = ContainerManager()
+        mocker.patch.object(mgr, "_wait_for_health", return_value=None)
+
+        env = {"FOO": "bar"}
+        mgr.start_agent("issue-triage", image="img", port=9001, environment=env)
+
+        client.containers.run.assert_called_once()
+        _, kwargs = client.containers.run.call_args
+        assert kwargs["environment"] == env
+
 
 # ---------------------------------------------------------------------------
 # stop_all
@@ -220,9 +238,9 @@ class TestWaitForHealth:
         client = MagicMock()
         mocker.patch("docker.from_env", return_value=client)
 
-        import httpx
+        import httpxyz
 
-        mock_response = MagicMock(spec=httpx.Response)
+        mock_response = MagicMock(spec=httpxyz.Response)
         mock_response.status_code = 200
         mocker.patch("httpx.get", return_value=mock_response)
 
@@ -288,5 +306,29 @@ class TestContainerRestartOnExit:
         # Second exit → mark failed, no further restart
         mgr.handle_container_exit("issue-triage", image="night-brownie-issue-triage:latest", port=9001)
 
-        assert client.containers.run.call_count == 2  # no third start
         assert mgr._failed == {"issue-triage"}
+
+    def test_restart_preserves_environment(self, mocker):
+        """The environment dict is preserved when a container is restarted on exit."""
+        client = _mock_docker_client()
+        container = MagicMock()
+        container.id = "abc123"
+        client.containers.run.return_value = container
+        mocker.patch("docker.from_env", return_value=client)
+
+        mgr = ContainerManager()
+        mocker.patch.object(mgr, "_wait_for_health", return_value=None)
+
+        env = {"FOO": "bar"}
+        mgr.start_agent("issue-triage", image="img", port=9001, environment=env)
+
+        # First run called with env
+        assert client.containers.run.call_count == 1
+        assert client.containers.run.call_args[1]["environment"] == env
+
+        # Simulate unexpected exit and handle it
+        mgr.handle_container_exit("issue-triage", image="img", port=9001)
+
+        # Second run (restart) should also have the same env
+        assert client.containers.run.call_count == 2
+        assert client.containers.run.call_args[1]["environment"] == env

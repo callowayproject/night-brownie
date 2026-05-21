@@ -393,7 +393,13 @@ class TestMainContainerStartup:
         main(["start", "--config", str(config_path)])
 
         mock_cm.start_agent.assert_called_once_with(
-            "issue-triage", image="night-brownie-issue-triage:latest", port=9001
+            "issue-triage",
+            image="night-brownie-issue-triage:latest",
+            port=9001,
+            environment={
+                "NIGHT_BROWNIE_URL": "http://host.containers.internal:8000",
+                "AGENT_URL": "http://localhost:9001",
+            },
         )
 
     def test_start_agent_error_exits_nonzero(self, tmp_path: Path, mocker) -> None:

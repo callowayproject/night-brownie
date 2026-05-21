@@ -143,7 +143,7 @@ class TestDispatchEnqueues:
         """dispatch() inserts the task into the queue for route_target.url."""
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client()
             await dispatcher.dispatch(_make_event(), route_target)
 
@@ -159,7 +159,7 @@ class TestDispatchEnqueues:
         memory.upsert_memory_summary("owner/repo", 42, "Prior: labeled as bug.")
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client()
             await dispatcher.dispatch(_make_event(issue_number=42), route_target)
 
@@ -175,7 +175,7 @@ class TestDispatchEnqueues:
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
         mock_post = AsyncMock(return_value=MagicMock(status_code=202))
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=None)
@@ -195,7 +195,7 @@ class TestDispatchEnqueues:
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
         mock_post = AsyncMock(return_value=MagicMock(status_code=202))
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=None)
@@ -225,7 +225,7 @@ class TestDispatchEnqueues:
         mock_response.status_code = 200
         mock_response.json.return_value = decision_body
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=None)
@@ -254,7 +254,7 @@ class TestDispatchNudgeErrors:
         """A network error on the nudge POST does not raise from dispatch()."""
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client(post_side_effect=httpxyz.ConnectError("refused"))
             # Must not raise
             await dispatcher.dispatch(_make_event(), route_target)
@@ -266,8 +266,8 @@ class TestDispatchNudgeErrors:
         """Task is in the queue even if the nudge POST throws."""
         dispatcher = _make_dispatcher(config, memory, task_queue, mocker)
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
-            mock_cls.return_value = _mock_async_client(post_side_effect=httpx.ConnectError("refused"))
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
+            mock_cls.return_value = _mock_async_client(post_side_effect=httpxyz.ConnectError("refused"))
             await dispatcher.dispatch(_make_event(), route_target)
 
         claimed = task_queue.claim_next("http://localhost:8001")

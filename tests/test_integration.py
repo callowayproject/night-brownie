@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpxyz
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -137,7 +138,7 @@ class TestFullTriagePipeline:
         route_target = router.route("issue.triage", _REPO)
         assert route_target is not None
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client()
             await dispatcher.dispatch(_make_event(), route_target)
 
@@ -157,7 +158,7 @@ class TestFullTriagePipeline:
         assert route_target is not None
 
         mock_post = AsyncMock(return_value=MagicMock(status_code=202))
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_client = AsyncMock()
             mock_client.__aenter__ = AsyncMock(return_value=mock_client)
             mock_client.__aexit__ = AsyncMock(return_value=None)
@@ -180,7 +181,7 @@ class TestFullTriagePipeline:
         route_target = router.route("issue.triage", _REPO)
         assert route_target is not None
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client()
             await dispatcher.dispatch(_make_event(), route_target)
 
@@ -193,15 +194,15 @@ class TestFullTriagePipeline:
         self, config: NightBrownieConfig, memory: MemoryStore, task_queue: TaskQueue, router: Router, mocker
     ) -> None:
         """Task is durably enqueued even if the nudge POST to the agent fails."""
-        import httpx as _httpx
+        import httpxyz as _httpx
 
         mocker.patch("night_brownie.executor.Github")
         dispatcher = Dispatcher(config=config, memory=memory, task_queue=task_queue)
         route_target = router.route("issue.triage", _REPO)
         assert route_target is not None
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
-            mock_cls.return_value = _mock_async_client(post_side_effect=_httpx.ConnectError("refused"))
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
+            mock_cls.return_value = _mock_async_client(post_side_effect=httpxyz.ConnectError("refused"))
             await dispatcher.dispatch(_make_event(), route_target)
 
         claimed = task_queue.claim_next("http://localhost:9001")
@@ -251,7 +252,7 @@ class TestPollerFeedsDispatcher:
             if route_target is not None:
                 await dispatcher.dispatch(event, route_target)
 
-        with patch("night_brownie.server.httpx.AsyncClient") as mock_cls:
+        with patch("night_brownie.server.httpxyz.AsyncClient") as mock_cls:
             mock_cls.return_value = _mock_async_client()
             await poller.poll_all(config.repos, on_event)
 
