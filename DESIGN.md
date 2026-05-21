@@ -62,7 +62,7 @@ components:
 
 ### Creative North Star: "The Infrastructure Manual"
 
-This is documentation built the way a foreman runs a job site: precise, no wasted motion,
+This is documentation built the way a night brownie runs a job site: precise, no wasted motion,
 and trustworthy on day one and day five hundred.
 The visual system earns credibility through restraint.
 A developer who lands on these docs is skeptical by default —

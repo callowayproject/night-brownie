@@ -60,6 +60,7 @@ class ContainerManager:
             ContainerError: If the container fails to become healthy.
         """
         self._ensure_image(image)
+        logger.info("Starting agent container", agent_type=agent_type, image=image)
         container = self._client.containers.run(
             image,
             detach=True,

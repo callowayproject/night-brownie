@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-04-30T00:00:00Z",
-  "title": "Design System: Foreman",
+  "title": "Design System: Night Brownie",
   "extensions": {
     "colorMeta": {
       "blueprint-steel": {
@@ -100,7 +100,7 @@
   ],
   "narrative": {
     "northStar": "The Infrastructure Manual",
-    "overview": "This is documentation built the way a foreman runs a job site: precise, no wasted motion, and trustworthy on day one and day five hundred. The visual system earns credibility through restraint. A developer who lands on these docs is skeptical by default — they have been burned by tools with slick marketing that delivered nothing. Foreman's design answers that skepticism by refusing to perform.\n\nThe reference is the kind of documentation engineers save as a bookmark and actually return to: Docker Compose reference, the GNU Make manual, Stripe's API docs. These are trusted not because they look expensive, but because they have exactly what you need and nothing you don't.\n\nThis system is explicitly not an AI startup landing page. No glassmorphism, no hero metrics, no gradient text, no friendly onboarding flows.",
+    "overview": "This is documentation built the way a night brownie runs a job site: precise, no wasted motion, and trustworthy on day one and day five hundred. The visual system earns credibility through restraint. A developer who lands on these docs is skeptical by default — they have been burned by tools with slick marketing that delivered nothing. Night Brownie's design answers that skepticism by refusing to perform.\n\nThe reference is the kind of documentation engineers save as a bookmark and actually return to: Docker Compose reference, the GNU Make manual, Stripe's API docs. These are trusted not because they look expensive, but because they have exactly what you need and nothing you don't.\n\nThis system is explicitly not an AI startup landing page. No glassmorphism, no hero metrics, no gradient text, no friendly onboarding flows.",
     "keyCharacteristics": [
       "Flat surfaces: depth through tonal color difference and 1px borders, never shadows",
       "Construction-site palette: anchored in physical-world signaling colors",

@@ -127,7 +127,7 @@ wheels = [
 ]
 
 [[package]]
-name = "foreman-client"
+name = "night-brownie-client"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

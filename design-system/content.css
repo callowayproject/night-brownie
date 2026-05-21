@@ -270,7 +270,7 @@ article ol {
 }
 
 article dl {
-
+  margin-bottom: var(--space-xs);
 }
 
 article dl dt {
@@ -292,6 +292,9 @@ article dl dd + dt {
   margin-top: var(--space-xs);
 }
 
+article details {
+  margin-bottom: var(--space-md)
+}
 /* ── Footer ────────────────────────────────────────────── */
 
 footer {

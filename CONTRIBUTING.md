@@ -147,9 +147,9 @@ The recommended way is using [uv](https://docs.astral.sh/uv/getting-started/inst
 Run the following in a terminal:
 
 ```console
-git clone https://github.com/callowayproject/foreman.git
+git clone https://github.com/callowayproject/night-brownie.git
 
-cd foreman
+cd night-brownie
 
 uv sync
 ```
@@ -172,6 +172,6 @@ You can see a listing of the checks in the ``.pre-commit-config.yaml`` file.
 pre-commit install
 ```
 
-[documentation]: https://callowayproject.github.io/foreman/
-[new_issue]: https://github.com/callowayproject/foreman/issues/new
-[issues]: https://github.com/callowayproject/foreman/issues
+[documentation]: https://callowayproject.github.io/night_brownie/
+[new_issue]: https://github.com/callowayproject/night_brownie/issues/new
+[issues]: https://github.com/callowayproject/night_brownie/issues

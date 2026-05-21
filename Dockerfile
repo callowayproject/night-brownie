@@ -32,11 +32,11 @@ EXPOSE 8000
 LABEL maintainer="@" \
     org.opencontainers.image.authors="Corey Oordt coreyoordt@gmail.com" \
     org.opencontainers.image.created=2026-04-14T16:51:58Z \
-    org.opencontainers.image.url="https://github.com/callowayproject/foreman" \
-    org.opencontainers.image.source="https://github.com/callowayproject/foreman" \
+    org.opencontainers.image.url="https://github.com/callowayproject/night-brownie" \
+    org.opencontainers.image.source="https://github.com/callowayproject/night-brownie" \
     org.opencontainers.image.version="0.1.0" \
     org.opencontainers.image.licenses=MIT \
-    org.opencontainers.image.documentation="https://github.com/callowayproject/foreman" \
+    org.opencontainers.image.documentation="https://github.com/callowayproject/night-brownie" \
     org.opencontainers.image.description="A Python harness that acts as an always-on AI co-maintainer for OSS repositories."
 
 WORKDIR $WORKDIR
@@ -53,4 +53,4 @@ USER $USERNAME
 
 COPY --from=builder --chown=$USERNAME:$USER_GID /usr/share/uv/python /usr/share/uv/python
 COPY --from=builder --chown=$USERNAME:$USER_GID $APP_DIR $APP_DIR
-CMD ["fastapi", "run", "foreman/main.py", "--port", "8000"]
+CMD ["fastapi", "run", "night_brownie/main.py", "--port", "8000"]

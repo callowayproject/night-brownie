@@ -42,7 +42,7 @@ repos:
       - id: mypy
         args: [--no-strict-optional, --ignore-missing-imports]
         additional_dependencies: ["toml", "types-PyYAML"]
-        exclude: ^foreman-client/
+        exclude: ^night-brownie-client/
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.8.3
     hooks:
@@ -63,8 +63,10 @@ repos:
   - repo: https://github.com/djlint/djLint
     rev: v1.36.4
     hooks:
-      - id: djlint-reformat
-      - id: djlint
+      - id: djlint-reformat-jinja
+        types_or: ["html"]
+      - id: djlint-jinja
+        types_or: ["html"]
 
 ci:
   autofix_prs: false
