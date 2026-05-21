@@ -7,7 +7,7 @@ import time
 import docker
 import docker.errors
 import docker.models.containers
-import httpx
+import httpxyz
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -36,6 +36,8 @@ class ContainerManager:
 
         # agent_type → docker container object
         self._containers: dict[str, docker.models.containers.Container] = {}
+        # agent_type → environment variables
+        self._envs: dict[str, dict[str, str]] = {}
         # agent types that have permanently failed (after one restart attempt)
         self._failed: set[str] = set()
         # track restart attempts per agent_type
@@ -45,13 +47,14 @@ class ContainerManager:
     # Public API
     # ------------------------------------------------------------------
 
-    def start_agent(self, agent_type: str, *, image: str, port: int) -> str:
+    def start_agent(self, agent_type: str, *, image: str, port: int, environment: dict[str, str] | None = None) -> str:
         """Pull (if needed), start the container, wait for health, return URL.
 
         Args:
             agent_type: Agent type identifier (e.g. `"issue-triage"`).
             image: Docker image name/tag to run.
             port: Host port to bind the container's port 8000 to.
+            environment: Optional dictionary of environment variables to pass to the container.
 
         Returns:
             The base URL of the running container (e.g. `"http://localhost:9001"`).
@@ -67,12 +70,20 @@ class ContainerManager:
             ports={"8000/tcp": port},
             name=f"night-brownie-{agent_type}",
             remove=True,
+            environment=environment,
         )
         self._containers[agent_type] = container
+        if environment:
+            self._envs[agent_type] = environment
         self._restart_attempts[agent_type] = 0
 
         url = f"http://localhost:{port}"
-        self._wait_for_health(url)
+        try:
+            self._wait_for_health(url)
+        except ContainerError:
+            print(self._containers[agent_type].logs())
+            raise
+
         logger.info("Agent container started", agent_type=agent_type, url=url)
         return url
 
@@ -88,6 +99,7 @@ class ContainerManager:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Error stopping container", agent_type=agent_type, error=str(exc))
         self._containers = {}
+        self._envs = {}
 
     def handle_container_exit(self, agent_type: str, *, image: str, port: int) -> None:
         """Handle an unexpected container exit with one restart attempt.
@@ -117,6 +129,7 @@ class ContainerManager:
         logger.error("Agent container exited unexpectedly — attempting restart", agent_type=agent_type)
         self._restart_attempts[agent_type] = attempts + 1
 
+        env = self._envs.get(agent_type)
         self._ensure_image(image)
         container = self._client.containers.run(
             image,
@@ -124,6 +137,7 @@ class ContainerManager:
             ports={"8000/tcp": port},
             name=f"night-brownie-{agent_type}",
             remove=True,
+            environment=env,
         )
         self._containers[agent_type] = container
 
@@ -167,7 +181,7 @@ class ContainerManager:
         health_url = f"{url}/health"
         for attempt in range(retries):
             try:
-                response = httpx.get(health_url, timeout=2.0)
+                response = httpxyz.get(health_url, timeout=2.0)
                 if response.status_code == 200:
                     return
             except Exception as exc:  # noqa: BLE001

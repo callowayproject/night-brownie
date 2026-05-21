@@ -184,7 +184,21 @@ def _run_start(args: Any) -> None:
                 sys.exit(1)
             for agent_type, image, port in agent_specs:
                 try:
-                    url = container_manager.start_agent(agent_type, image=image, port=port)
+                    # 1. Build environment for the agent container.
+                    # It needs to reach the harness (NIGHT_BROWNIE_URL) and know its own URL (AGENT_URL).
+                    # Heuristic: on macOS/Windows, host.docker.internal reaches the host.
+                    env = {
+                        "NIGHT_BROWNIE_URL": f"http://host.containers.internal:{args.port}",
+                        "AGENT_URL": f"http://localhost:{port}",
+                    }
+
+                    # 2. Pass LLM API key to the provider-specific env var LiteLLM expects in the agent.
+                    if config.llm.api_key:
+                        provider = config.llm.provider.lower()
+                        env_key = f"{provider.upper()}_API_KEY"
+                        env[env_key] = config.llm.api_key.get_secret_value()
+
+                    url = container_manager.start_agent(agent_type, image=image, port=port, environment=env)
                     agent_urls[agent_type] = url
                 except ContainerError as exc:
                     print(f"Error starting agent '{agent_type}': {exc}", file=sys.stderr)

@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from night_brownie.executor import GitHubExecutor, UnknownActionError
+from night_brownie.executor import GitHubExecutor
 from night_brownie.logging_info import configure as configure_logging
 from night_brownie.middleware import LogCorrelationIdMiddleware
 from night_brownie.otel import configure_otel
@@ -74,11 +74,17 @@ class Dispatcher:
         issue_number: int = event["issue_number"]
         payload: dict[str, Any] = event["payload"]
 
+        # Merge agent-specific configuration and allow_close into the payload
+        # so the agent can access them (e.g. for triage rules or permissions).
+        agent_payload = payload.copy()
+        agent_payload.update(route_target.agent_assignment.config)
+        agent_payload["allow_close"] = route_target.agent_assignment.allow_close
+
         memory_summary = self._memory.get_memory_summary(repo, issue_number)
         task = TaskMessage(
             type="issue.triage",
             repo=repo,
-            payload=payload,
+            payload=agent_payload,
             context=TaskContext(
                 llm_backend=LLMBackendRef(
                     provider=self._config.llm.provider,
@@ -152,7 +158,7 @@ async def _drain_loop(
                 summary = f"decision={decision.decision.value}; rationale={decision.rationale}"
                 memory.upsert_memory_summary(task.repo, issue_number, summary)
                 task_queue.mark_done(task.task_id)
-            except UnknownActionError:
+            except Exception:
                 logger.exception("Failed to process drain task", task_id=task.task_id)
 
         if pairs:
@@ -177,7 +183,7 @@ async def _requeue_loop(
             requeued = task_queue.requeue_stale()
             failed = task_queue.fail_exhausted(max_retries=config.queue.max_retries)
             logger.info("Requeue cycle", requeued=requeued, failed=failed)
-        except sqlite3.Error:
+        except Exception:
             logger.exception("Requeue cycle failed; retrying on next interval")
 
 
