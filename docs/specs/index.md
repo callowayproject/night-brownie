@@ -23,3 +23,15 @@ A proposal for improving the messaging system.
 - **Objective**: Address the issue where messages sent to disconnected nodes are lost.
 - **Key Documents**:
     - [Idea](./02-messaging-update/idea.md): Problem statement regarding the wire protocol and recovery mechanisms.
+
+### [03-container-runtime-abstraction](./03-container-runtime-abstraction/SPEC.md)
+
+Abstract container management to support Docker, Podman, and Apple Containers.
+**Status: Implemented**
+
+- **Objective**: Decouple the harness from the Docker SDK so maintainers can use whichever
+    container runtime they already have installed.
+- **Key Documents**:
+    - [Idea](./03-container-runtime-abstraction/idea.md): Problem statement and recommended direction.
+    - [Specification](./03-container-runtime-abstraction/SPEC.md): Full technical specification.
+    - [Plan](./03-container-runtime-abstraction/plan.md): Implementation roadmap.
