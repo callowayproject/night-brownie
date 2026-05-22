@@ -1,39 +1,32 @@
-"""Docker container lifecycle management for agent containers."""
+"""Container lifecycle management for agent containers."""
 
 from __future__ import annotations
 
 import time
 
-import docker
-import docker.errors
-import docker.models.containers
 import httpxyz
 import structlog
 
-from night_brownie.containers.base import ContainerError
+from night_brownie.containers.base import ContainerBackend, ContainerError
 
 logger = structlog.get_logger(__name__)
 
 
 class ContainerManager:
-    """Manages Docker container start/stop for configured agent types.
+    """Manages container start/stop for configured agent types.
 
     On startup, pull (if needed) and start agent containers.
     On shutdown, call [`stop_all`][.] to stop them.
     The container lifecycle manager registers URLs with the router after each successful start.
 
-    Raises:
-        ContainerError: If the Docker socket is unavailable at construction time.
+    Args:
+        backend: The container runtime backend to use.
     """
 
-    def __init__(self) -> None:
-        try:
-            self._client = docker.from_env()
-        except docker.errors.DockerException as exc:
-            raise ContainerError(f"Docker socket unavailable — is Docker running? ({exc})") from exc
-
-        # agent_type → docker container object
-        self._containers: dict[str, docker.models.containers.Container] = {}
+    def __init__(self, backend: ContainerBackend) -> None:
+        self._backend = backend
+        # agent_type → opaque handle string from backend.run_container
+        self._handles: dict[str, str] = {}
         # agent_type → environment variables
         self._envs: dict[str, dict[str, str]] = {}
         # agent types that have permanently failed (after one restart attempt)
@@ -50,7 +43,7 @@ class ContainerManager:
 
         Args:
             agent_type: Agent type identifier (e.g. `"issue-triage"`).
-            image: Docker image name/tag to run.
+            image: Container image name/tag to run.
             port: Host port to bind the container's port 8000 to.
             environment: Optional dictionary of environment variables to pass to the container.
 
@@ -60,17 +53,18 @@ class ContainerManager:
         Raises:
             ContainerError: If the container fails to become healthy.
         """
-        self._ensure_image(image)
+        if not self._backend.image_exists(image):
+            logger.info("Pulling image", image=image)
+            self._backend.pull_image(image)
+
         logger.info("Starting agent container", agent_type=agent_type, image=image)
-        container = self._client.containers.run(
+        handle = self._backend.run_container(
             image,
-            detach=True,
-            ports={"8000/tcp": port},
             name=f"night-brownie-{agent_type}",
-            remove=True,
+            port=port,
             environment=environment,
         )
-        self._containers[agent_type] = container
+        self._handles[agent_type] = handle
         if environment:
             self._envs[agent_type] = environment
         self._restart_attempts[agent_type] = 0
@@ -79,7 +73,7 @@ class ContainerManager:
         try:
             self._wait_for_health(url)
         except ContainerError:
-            print(self._containers[agent_type].logs())
+            logger.error("Container failed health check", agent_type=agent_type, logs=self._backend.get_logs(handle))
             raise
 
         logger.info("Agent container started", agent_type=agent_type, url=url)
@@ -90,13 +84,13 @@ class ContainerManager:
 
         Safe to call multiple times.
         """
-        for agent_type, container in list(self._containers.items()):
+        for agent_type, handle in list(self._handles.items()):
             try:
-                container.stop()
+                self._backend.stop_container(handle)
                 logger.info("Agent container stopped", agent_type=agent_type)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Error stopping container", agent_type=agent_type, error=str(exc))
-        self._containers = {}
+        self._handles = {}
         self._envs = {}
 
     def handle_container_exit(self, agent_type: str, *, image: str, port: int) -> None:
@@ -107,7 +101,7 @@ class ContainerManager:
 
         Args:
             agent_type: Agent type identifier.
-            image: Docker image to restart.
+            image: Container image to restart.
             port: Host port for the restarted container.
         """
         if agent_type in self._failed:
@@ -121,23 +115,23 @@ class ContainerManager:
                 agent_type=agent_type,
             )
             self._failed.add(agent_type)
-            self._containers.pop(agent_type, None)
+            self._handles.pop(agent_type, None)
             return
 
         logger.error("Agent container exited unexpectedly — attempting restart", agent_type=agent_type)
         self._restart_attempts[agent_type] = attempts + 1
 
         env = self._envs.get(agent_type)
-        self._ensure_image(image)
-        container = self._client.containers.run(
+        if not self._backend.image_exists(image):
+            self._backend.pull_image(image)
+
+        handle = self._backend.run_container(
             image,
-            detach=True,
-            ports={"8000/tcp": port},
             name=f"night-brownie-{agent_type}",
-            remove=True,
+            port=port,
             environment=env,
         )
-        self._containers[agent_type] = container
+        self._handles[agent_type] = handle
 
         url = f"http://localhost:{port}"
         try:
@@ -152,18 +146,6 @@ class ContainerManager:
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
-
-    def _ensure_image(self, image: str) -> None:
-        """Pull *image* if it is not present in the local Docker registry.
-
-        Args:
-            image: Docker image name/tag.
-        """
-        try:
-            self._client.images.get(image)
-        except docker.errors.ImageNotFound:
-            logger.info("Pulling image", image=image)
-            self._client.images.pull(image)
 
     def _wait_for_health(self, url: str, *, retries: int = 30, delay: float = 1.0) -> None:
         """Poll *url*/health until a 200 response is received.
