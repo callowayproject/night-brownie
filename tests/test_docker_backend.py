@@ -9,7 +9,6 @@ import pytest
 from night_brownie.containers.base import ContainerError
 from night_brownie.containers.docker import DockerBackend
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -181,6 +180,28 @@ class TestDockerBackendStopContainer:
 # ---------------------------------------------------------------------------
 
 
+class TestDockerBackendStopContainerErrors:
+    """DockerBackend.stop_container error handling."""
+
+    def test_wraps_not_found_as_container_error(self, mocker):
+        """stop_container raises ContainerError when container is not found."""
+        import docker.errors
+
+        backend, client = _make_backend(mocker)
+        client.containers.get.side_effect = docker.errors.NotFound("not found")
+        with pytest.raises(ContainerError, match="stop"):
+            backend.stop_container("gone123")
+
+    def test_wraps_docker_exception_as_container_error(self, mocker):
+        """stop_container raises ContainerError for generic DockerException."""
+        import docker.errors
+
+        backend, client = _make_backend(mocker)
+        client.containers.get.side_effect = docker.errors.DockerException("connection reset")
+        with pytest.raises(ContainerError):
+            backend.stop_container("abc123")
+
+
 class TestDockerBackendGetLogs:
     """DockerBackend.get_logs."""
 
@@ -196,3 +217,21 @@ class TestDockerBackendGetLogs:
         client.containers.get.assert_called_once_with("abc123")
         assert result == b"hello logs"
         assert isinstance(result, bytes)
+
+    def test_wraps_not_found_as_container_error(self, mocker):
+        """get_logs raises ContainerError when container is not found."""
+        import docker.errors
+
+        backend, client = _make_backend(mocker)
+        client.containers.get.side_effect = docker.errors.NotFound("not found")
+        with pytest.raises(ContainerError, match="logs"):
+            backend.get_logs("gone123")
+
+    def test_wraps_docker_exception_as_container_error(self, mocker):
+        """get_logs raises ContainerError for generic DockerException."""
+        import docker.errors
+
+        backend, client = _make_backend(mocker)
+        client.containers.get.side_effect = docker.errors.DockerException("connection reset")
+        with pytest.raises(ContainerError):
+            backend.get_logs("abc123")

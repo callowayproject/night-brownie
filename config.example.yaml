@@ -33,7 +33,7 @@ polling:
 # --- Rootless Podman ---
 # containers:
 #   backend: podman
-#   socket_url: "unix:///run/user/1000/podman/podman.sock"
+#   socket_url: "unix:///run/user/${UID}/podman/podman.sock"  # UID auto-detected if omitted
 
 # --- Apple Containers (macOS only) ---
 # containers:

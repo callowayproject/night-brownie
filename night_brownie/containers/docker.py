@@ -84,8 +84,14 @@ class DockerBackend(ContainerBackend):
 
         Args:
             handle: Container ID returned by :meth:`run_container`.
+
+        Raises:
+            ContainerError: If the container cannot be found or stopped.
         """
-        self._client.containers.get(handle).stop()
+        try:
+            self._client.containers.get(handle).stop()
+        except docker.errors.DockerException as exc:
+            raise ContainerError(f"Failed to stop container {handle!r}: {exc}") from exc
 
     def get_logs(self, handle: str) -> bytes:
         """Return logs for the container identified by *handle*.
@@ -95,6 +101,12 @@ class DockerBackend(ContainerBackend):
 
         Returns:
             Container log output as bytes.
+
+        Raises:
+            ContainerError: If the container cannot be found.
         """
-        logs = self._client.containers.get(handle).logs()
-        return logs if isinstance(logs, bytes) else logs.encode()
+        try:
+            logs = self._client.containers.get(handle).logs()
+            return logs if isinstance(logs, bytes) else b"".join(logs)
+        except docker.errors.DockerException as exc:
+            raise ContainerError(f"Failed to get logs for container {handle!r}: {exc}") from exc

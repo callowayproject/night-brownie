@@ -1,12 +1,10 @@
-# apple.py
-
 """Apple Containers CLI-based container backend (macOS only)."""
 
 from __future__ import annotations
 
 import subprocess
 
-from night_brownie.containers.base import ContainerBackend
+from night_brownie.containers.base import ContainerBackend, ContainerError
 
 
 class AppleContainersBackend(ContainerBackend):
@@ -24,12 +22,15 @@ class AppleContainersBackend(ContainerBackend):
         Returns:
             True if the image exists locally, False otherwise.
         """
-        result = subprocess.run(
-            ["container", "images", "list", "--format", "{{.Repository}}:{{.Tag}}"],  # noqa: S607
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        try:
+            result = subprocess.run(
+                ["container", "images", "list", "--format", "{{.Repository}}:{{.Tag}}"],  # noqa: S607
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise ContainerError(f"Apple Containers CLI failed: {exc.stderr.strip()}") from exc
         return image in result.stdout
 
     def pull_image(self, image: str) -> None:
@@ -62,6 +63,8 @@ class AppleContainersBackend(ContainerBackend):
         cmd = ["container", "run", "--detach", "--rm", "--name", name, "-p", f"{port}:8000"]
         if environment:
             for key, val in environment.items():
+                if "\n" in key or "\n" in val or "\0" in key or "\0" in val:
+                    raise ContainerError(f"Invalid environment variable {key!r}: contains control character")
                 cmd += ["--env", f"{key}={val}"]
         cmd.append(image)
         result = subprocess.run(cmd, check=True, capture_output=True, text=True)  # noqa: S603

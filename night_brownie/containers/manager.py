@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import time
+import asyncio
 
 import httpxyz
 import structlog
@@ -38,7 +38,9 @@ class ContainerManager:
     # Public API
     # ------------------------------------------------------------------
 
-    def start_agent(self, agent_type: str, *, image: str, port: int, environment: dict[str, str] | None = None) -> str:
+    async def start_agent(
+        self, agent_type: str, *, image: str, port: int, environment: dict[str, str] | None = None
+    ) -> str:
         """Pull (if needed), start the container, wait for health, return URL.
 
         Args:
@@ -71,7 +73,7 @@ class ContainerManager:
 
         url = f"http://localhost:{port}"
         try:
-            self._wait_for_health(url)
+            await self._wait_for_health(url)
         except ContainerError:
             logger.error("Container failed health check", agent_type=agent_type, logs=self._backend.get_logs(handle))
             raise
@@ -93,7 +95,9 @@ class ContainerManager:
         self._handles = {}
         self._envs = {}
 
-    def handle_container_exit(self, agent_type: str, *, image: str, port: int) -> None:
+    async def handle_container_exit(
+        self, agent_type: str, *, image: str, port: int, environment: dict[str, str] | None = None
+    ) -> None:
         """Handle an unexpected container exit with one restart attempt.
 
         If the container has already been restarted once and exits again, it is
@@ -103,6 +107,8 @@ class ContainerManager:
             agent_type: Agent type identifier.
             image: Container image to restart.
             port: Host port for the restarted container.
+            environment: Environment variables to inject into the restarted container.
+                Callers must supply credentials explicitly; there is no implicit fallback.
         """
         if agent_type in self._failed:
             logger.critical("Agent already marked failed — not restarting", agent_type=agent_type)
@@ -121,7 +127,6 @@ class ContainerManager:
         logger.error("Agent container exited unexpectedly — attempting restart", agent_type=agent_type)
         self._restart_attempts[agent_type] = attempts + 1
 
-        env = self._envs.get(agent_type)
         if not self._backend.image_exists(image):
             self._backend.pull_image(image)
 
@@ -129,13 +134,13 @@ class ContainerManager:
             image,
             name=f"night-brownie-{agent_type}",
             port=port,
-            environment=env,
+            environment=environment,
         )
         self._handles[agent_type] = handle
 
         url = f"http://localhost:{port}"
         try:
-            self._wait_for_health(url)
+            await self._wait_for_health(url)
         except ContainerError:
             logger.critical("Restarted container failed health check — marking failed", agent_type=agent_type)
             self._failed.add(agent_type)
@@ -147,7 +152,7 @@ class ContainerManager:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _wait_for_health(self, url: str, *, retries: int = 30, delay: float = 1.0) -> None:
+    async def _wait_for_health(self, url: str, *, retries: int = 30, delay: float = 1.0) -> None:
         """Poll *url*/health until a 200 response is received.
 
         Args:
@@ -167,6 +172,6 @@ class ContainerManager:
             except Exception as exc:  # noqa: BLE001
                 logger.debug("Health check attempt failed", url=health_url, attempt=attempt, error=str(exc))
             if attempt < retries - 1:
-                time.sleep(delay)
+                await asyncio.sleep(delay)
 
         raise ContainerError(f"Container at {url} did not pass health check after {retries} attempts")

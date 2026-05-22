@@ -6,7 +6,7 @@ import os
 
 from night_brownie.containers.docker import DockerBackend
 
-_DEFAULT_SOCKET = "unix:///run/user/{uid}/podman/podman.sock"
+_DEFAULT_SOCKET_TEMPLATE = "unix:///run/user/{uid}/podman/podman.sock"
 
 
 class PodmanBackend(DockerBackend):
@@ -23,5 +23,5 @@ class PodmanBackend(DockerBackend):
     """
 
     def __init__(self, socket_url: str | None = None) -> None:
-        url = socket_url if socket_url is not None else _DEFAULT_SOCKET.format(uid=os.getuid())
+        url = socket_url if socket_url is not None else _DEFAULT_SOCKET_TEMPLATE.format(uid=os.getuid())
         super().__init__(socket_url=url)

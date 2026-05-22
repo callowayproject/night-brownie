@@ -5,6 +5,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+import structlog
+
+# TYPE_CHECKING avoids a circular import at runtime
 if TYPE_CHECKING:
     from night_brownie.config import ContainersConfig
 
@@ -101,6 +104,10 @@ def backend_from_config(config: ContainersConfig) -> ContainerBackend:
     if config.backend == "apple":
         from night_brownie.containers.apple import AppleContainersBackend
 
+        if config.socket_url is not None:
+            structlog.get_logger(__name__).warning(
+                "socket_url is ignored for AppleContainersBackend", socket_url=config.socket_url
+            )
         return AppleContainersBackend()
 
     raise ContainerError(f"Unsupported container backend: {config.backend!r}")

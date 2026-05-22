@@ -117,6 +117,13 @@ containers:
   backend: apple
 ```
 
+> **Security note:** When using the `apple` backend, environment variables
+> (including LLM API keys) are passed as `--env KEY=VALUE` arguments to the `container` CLI subprocess.
+> These arguments are **visible in `ps` output and the process argument list** on macOS,
+> which is a meaningful exposure difference compared to Docker and Podman.
+> Avoid using `AppleContainersBackend` with long-lived secrets in production
+> until a secrets-file mechanism is available.
+
 ## `polling`
 
 Controls how often Foreman checks GitHub for new events.

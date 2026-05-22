@@ -172,9 +172,8 @@ def _run_start(args: Any) -> None:
 
         poller = GitHubPoller(token=config.identity.github_token, memory=memory)
 
-        # 4. Start agent containers (if any are configured with image + port).
+        # 4. Create container manager for agent containers (if any are configured).
         container_manager: ContainerManager | None = None
-        agent_urls: dict[str, str] = {}
         agent_specs = _collect_agent_images(config)
 
         if agent_specs:
@@ -183,27 +182,6 @@ def _run_start(args: Any) -> None:
             except ContainerError as exc:
                 print(f"Error: {exc}", file=sys.stderr)
                 sys.exit(1)
-            for agent_type, image, port in agent_specs:
-                try:
-                    # 1. Build environment for the agent container.
-                    # It needs to reach the harness (NIGHT_BROWNIE_URL) and know its own URL (AGENT_URL).
-                    # Heuristic: on macOS/Windows, host.docker.internal reaches the host.
-                    env = {
-                        "NIGHT_BROWNIE_URL": f"http://host.containers.internal:{args.port}",
-                        "AGENT_URL": f"http://localhost:{port}",
-                    }
-
-                    # 2. Pass LLM API key to the provider-specific env var LiteLLM expects in the agent.
-                    if config.llm.api_key:
-                        provider = config.llm.provider.lower()
-                        env_key = f"{provider.upper()}_API_KEY"
-                        env[env_key] = config.llm.api_key.get_secret_value()
-
-                    url = container_manager.start_agent(agent_type, image=image, port=port, environment=env)
-                    agent_urls[agent_type] = url
-                except ContainerError as exc:
-                    print(f"Error starting agent '{agent_type}': {exc}", file=sys.stderr)
-                    sys.exit(1)
 
         logger.info(
             "Night Brownie initialized",
@@ -214,7 +192,50 @@ def _run_start(args: Any) -> None:
         )
 
         # 5. Run the poller and HTTP server concurrently.
-        asyncio.run(_run_loop(config, memory, poller, dispatcher, args.host, args.port, container_manager, agent_urls))
+        asyncio.run(
+            _run_loop(
+                config, memory, poller, dispatcher, args.host, args.port, container_manager, agent_specs=agent_specs
+            )
+        )
+
+
+async def _start_agent_containers(
+    config: NightBrownieConfig,
+    container_manager: ContainerManager | None,
+    agent_specs: list[tuple[str, str, int]] | None,
+    harness_port: int,
+) -> dict[str, str]:
+    """Start all agent containers listed in *agent_specs* and return their URLs.
+
+    Args:
+        config: Validated runtime configuration (used for LLM API key injection).
+        container_manager: The container manager used to start each agent.
+        agent_specs: List of (agent_type, image, agent_port) tuples. May be ``None``.
+        harness_port: The HTTP server port, injected as ``NIGHT_BROWNIE_URL``.
+
+    Returns:
+        Mapping of agent_type → base URL for each successfully started container.
+    """
+    if not agent_specs or container_manager is None:
+        return {}
+
+    started: dict[str, str] = {}
+    for agent_type, image, agent_port in agent_specs:
+        env: dict[str, str] = {
+            "NIGHT_BROWNIE_URL": f"http://host.containers.internal:{harness_port}",
+            "AGENT_URL": f"http://localhost:{agent_port}",
+        }
+        if config.llm.api_key:
+            provider = config.llm.provider.lower()
+            env_key = f"{provider.upper()}_API_KEY"
+            env[env_key] = config.llm.api_key.get_secret_value()
+        try:
+            url = await container_manager.start_agent(agent_type, image=image, port=agent_port, environment=env)
+            started[agent_type] = url
+        except ContainerError as exc:
+            print(f"Error starting agent '{agent_type}': {exc}", file=sys.stderr)
+            sys.exit(1)
+    return started
 
 
 async def _run_loop(
@@ -226,6 +247,7 @@ async def _run_loop(
     port: int,
     container_manager: ContainerManager | None = None,
     agent_urls: dict[str, str] | None = None,
+    agent_specs: list[tuple[str, str, int]] | None = None,
 ) -> None:
     """Run the poll loop and HTTP server concurrently.
 
@@ -244,10 +266,14 @@ async def _run_loop(
             to stop on shutdown.
         agent_urls: Mapping of agent type → base URL for pre-started containers.
             Each entry is registered with the router before polling begins.
+        agent_specs: List of (agent_type, image, agent_port) tuples to start before polling.
+            Each container is started and its URL registered with the router.
     """
+    started_urls = await _start_agent_containers(config, container_manager, agent_specs, port)
+
     router = Router(config)
 
-    for agent_type, url in (agent_urls or {}).items():
+    for agent_type, url in {**(agent_urls or {}), **started_urls}.items():
         router.register_url(agent_type, url)
 
     async def on_event(repo_config: RepoConfig, event: dict[str, Any]) -> None:

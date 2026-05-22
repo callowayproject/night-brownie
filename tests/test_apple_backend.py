@@ -1,15 +1,14 @@
-# test_apple_backend.py
-
 """Tests for night_brownie.containers.apple — AppleContainersBackend."""
 
 from __future__ import annotations
 
 import subprocess
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 
 from night_brownie.containers.apple import AppleContainersBackend
+from night_brownie.containers.base import ContainerError
 
 
 def _make_backend() -> AppleContainersBackend:
@@ -43,8 +42,18 @@ class TestAppleContainersBackendImageExists:
             ["container", "images", "list", "--format", "{{.Repository}}:{{.Tag}}"],
             capture_output=True,
             text=True,
-            check=False,
+            check=True,
         )
+
+    def test_raises_container_error_on_cli_failure(self, mocker):
+        """ContainerError is raised when the Apple Containers CLI exits non-zero."""
+        mocker.patch(
+            "subprocess.run",
+            side_effect=subprocess.CalledProcessError(1, ["container", "images"], stderr="no such command"),
+        )
+        backend = _make_backend()
+        with pytest.raises(ContainerError, match="Apple Containers CLI failed"):
+            backend.image_exists("img:tag")
 
 
 class TestAppleContainersBackendPullImage:
@@ -158,6 +167,46 @@ class TestAppleContainersBackendGetLogs:
             capture_output=True,
             check=True,
         )
+
+
+class TestAppleContainersBackendEnvVarSanitization:
+    """AppleContainersBackend env var sanitization in run_container."""
+
+    def test_raises_container_error_on_newline_in_key(self, mocker):
+        """ContainerError is raised when an env key contains a newline character."""
+        mocker.patch("subprocess.run")
+        backend = _make_backend()
+        with pytest.raises(ContainerError, match="Invalid environment variable"):
+            backend.run_container("img:tag", name="n", port=8000, environment={"KEY\n": "val"})
+
+    def test_raises_container_error_on_newline_in_value(self, mocker):
+        """ContainerError is raised when an env value contains a newline character."""
+        mocker.patch("subprocess.run")
+        backend = _make_backend()
+        with pytest.raises(ContainerError, match="Invalid environment variable"):
+            backend.run_container("img:tag", name="n", port=8000, environment={"KEY": "val\n"})
+
+    def test_raises_container_error_on_null_byte_in_key(self, mocker):
+        """ContainerError is raised when an env key contains a null byte."""
+        mocker.patch("subprocess.run")
+        backend = _make_backend()
+        with pytest.raises(ContainerError, match="Invalid environment variable"):
+            backend.run_container("img:tag", name="n", port=8000, environment={"KEY\x00": "val"})
+
+    def test_raises_container_error_on_null_byte_in_value(self, mocker):
+        """ContainerError is raised when an env value contains a null byte."""
+        mocker.patch("subprocess.run")
+        backend = _make_backend()
+        with pytest.raises(ContainerError, match="Invalid environment variable"):
+            backend.run_container("img:tag", name="n", port=8000, environment={"KEY": "val\x00"})
+
+    def test_valid_env_does_not_raise(self, mocker):
+        """run_container does not raise for valid env keys and values."""
+        mock_run = mocker.patch("subprocess.run")
+        mock_run.return_value = MagicMock(stdout="handle\n")
+        backend = _make_backend()
+        result = backend.run_container("img:tag", name="n", port=8000, environment={"KEY": "val"})
+        assert result == "handle"
 
 
 class TestAppleContainersBackendRunContainerFailure:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from night_brownie.config import ContainersConfig
 from night_brownie.containers.apple import AppleContainersBackend
@@ -65,12 +66,37 @@ class TestBackendFromConfigApple:
         result = backend_from_config(ContainersConfig(backend="apple"))
         assert isinstance(result, AppleContainersBackend)
 
+    def test_warns_when_socket_url_set(self, mocker):
+        """A structlog warning is emitted when socket_url is set for apple backend."""
+        mocker.patch.object(AppleContainersBackend, "__init__", return_value=None)
+        warn_mock = mocker.patch("night_brownie.containers.base.structlog.get_logger")
+        backend_from_config(ContainersConfig(backend="apple", socket_url="unix:///ignored.sock"))
+        warn_mock.return_value.warning.assert_called_once()
+
+    def test_still_returns_apple_backend_with_socket_url(self, mocker):
+        """socket_url is ignored but the backend is still created successfully."""
+        mocker.patch.object(AppleContainersBackend, "__init__", return_value=None)
+        mocker.patch("night_brownie.containers.base.structlog.get_logger")
+        result = backend_from_config(ContainersConfig(backend="apple", socket_url="unix:///ignored.sock"))
+        assert isinstance(result, AppleContainersBackend)
+
 
 class TestBackendFromConfigErrors:
     """backend_from_config raises ContainerError for unsupported backends."""
 
-    def test_raises_for_unknown_backend(self):
-        """ContainerError is raised when backend value is unrecognised."""
+    def test_pydantic_rejects_unknown_backend(self):
+        """Pydantic ValidationError is raised when an unknown backend is given."""
+        with pytest.raises(ValidationError):
+            ContainersConfig(backend="unknown")
+
+    def test_raises_for_unknown_backend_via_model_construct(self):
+        """ContainerError is raised for unrecognised backend — tests defensive code.
+
+        This path is unreachable via normal config creation because Pydantic's
+        Literal["docker", "podman", "apple"] rejects unknown values before
+        backend_from_config is called. The defensive branch guards against
+        programmatic misuse (e.g. model_construct bypass).
+        """
         config = ContainersConfig.model_construct(backend="unknown")
         with pytest.raises(ContainerError, match="Unsupported"):
             backend_from_config(config)
