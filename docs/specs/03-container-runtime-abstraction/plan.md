@@ -171,7 +171,7 @@ replace all Docker SDK calls with backend calls.
 
 **Goal:** Add `ContainersConfig` to `config.py` and wire it into `NightBrownieConfig`.
 
-- [ ] In `night_brownie/config.py`, add after `LLMConfig`:
+- [x] In `night_brownie/config.py`, add after `LLMConfig`:
 
     ```python
     class ContainersConfig(BaseModel):
@@ -179,24 +179,24 @@ replace all Docker SDK calls with backend calls.
       socket_url: str | None = None
     ```
 
-- [ ] Add `Literal` to the `typing` import
-- [ ] Add to `NightBrownieConfig`:
+- [x] Add `Literal` to the `typing` import
+- [x] Add to `NightBrownieConfig`:
 
     ```python
     containers: ContainersConfig = ContainersConfig()
     ```
 
-- [ ] Update `config.example.yaml` with the three example snippets from SPEC.md §5
-- [ ] Add tests to `test_config.py`:
+- [x] Update `config.example.yaml` with the three example snippets from SPEC.md §5
+- [x] Add tests to `test_config.py`:
     - Default `containers` section → `ContainersConfig(backend="docker", socket_url=None)`
     - Explicit `backend: podman` + `socket_url` → parsed correctly
     - Explicit `backend: apple` → parsed correctly
 
 **Acceptance criteria:**
 
-- [ ] `NightBrownieConfig` loads with no `containers:` key (default docker)
-- [ ] `NightBrownieConfig` loads with all three backend values
-- [ ] `uv run pytest --agent-digest=term --no-cov` passes
+- [x] `NightBrownieConfig` loads with no `containers:` key (default docker)
+- [x] `NightBrownieConfig` loads with all three backend values
+- [x] `uv run pytest --agent-digest=term --no-cov` passes
 
 ---
 
