@@ -100,7 +100,7 @@ The old `containers.py` stays intact; nothing breaks yet.
 
 **Goal:** Subprocess-based backend for the `container` CLI (macOS only).
 
-- [ ] Write `night_brownie/containers/apple.py`:
+- [x] Write `night_brownie/containers/apple.py`:
     - `AppleContainersBackend(ContainerBackend)`
     - `image_exists` —
       `subprocess.run(["container","images","list","--format","{{.Repository}}:{{.Tag}}"], capture_output=True, text=True, check=False)`;
@@ -111,8 +111,8 @@ The old `containers.py` stays intact; nothing breaks yet.
     - `stop_container` — `subprocess.run(["container","stop",handle], check=True)`
     - `get_logs` — `subprocess.run(["container","logs",handle], capture_output=True, check=True)`;
       returns `result.stdout + result.stderr`
-- [ ] Wire `apple` case into `backend_from_config`
-- [ ] Write `tests/test_apple_backend.py`:
+- [x] Wire `apple` case into `backend_from_config`
+- [x] Write `tests/test_apple_backend.py`:
     - Mock `subprocess.run` throughout
     - `TestAppleContainersBackendImageExists` — image in stdout → True; not in stdout → False
     - `TestAppleContainersBackendPullImage` — calls `container pull <image>`
@@ -124,9 +124,9 @@ The old `containers.py` stays intact; nothing breaks yet.
 
 **Acceptance criteria:**
 
-- [ ] All `test_apple_backend.py` tests pass
-- [ ] `backend_from_config` instantiates correct class for all three `backend` values
-- [ ] `uv run pytest --agent-digest=term --no-cov` still passes overall
+- [x] All `test_apple_backend.py` tests pass
+- [x] `backend_from_config` instantiates correct class for all three `backend` values
+- [x] `uv run pytest --agent-digest=term --no-cov` still passes overall
 
 ---
 
@@ -135,7 +135,7 @@ The old `containers.py` stays intact; nothing breaks yet.
 **Goal:** Move `ContainerManager` to `manager.py`; accept injected backend;
 replace all Docker SDK calls with backend calls.
 
-- [ ] Write `night_brownie/containers/manager.py` (replaces flat `containers.py` logic):
+- [x] Write `night_brownie/containers/manager.py` (replaces flat `containers.py` logic):
     - `ContainerManager.__init__(self, backend: ContainerBackend)`:
         - Stores `self._backend = backend`
         - `self._handles: dict[str, str] = {}` (was `_containers: dict[str, Container]`)
@@ -158,12 +158,12 @@ replace all Docker SDK calls with backend calls.
         - Store new handle in `self._handles`
     - Remove `_ensure_image` (inlined above)
     - Keep `_wait_for_health` unchanged (HTTP-based, backend-agnostic)
-- [ ] Update `night_brownie/containers/__init__.py` — import `ContainerManager` from `.manager`
+- [x] Update `night_brownie/containers/__init__.py` — import `ContainerManager` from `.manager`
 
 **Acceptance criteria:**
 
-- [ ] `from night_brownie.containers import ContainerManager, ContainerError, ContainerBackend` works
-- [ ] `ContainerManager` can be constructed with a `MagicMock()` backend (no Docker import required)
+- [x] `from night_brownie.containers import ContainerManager, ContainerError, ContainerBackend` works
+- [x] `ContainerManager` can be constructed with a `MagicMock()` backend (no Docker import required)
 
 ---
 
