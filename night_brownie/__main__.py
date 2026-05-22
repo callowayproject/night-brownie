@@ -18,7 +18,7 @@ import uvicorn
 
 from night_brownie.config import ConfigError, load_config
 from night_brownie.containers import ContainerError, ContainerManager
-from night_brownie.containers.base import ContainersConfig, backend_from_config
+from night_brownie.containers.base import backend_from_config
 from night_brownie.memory import MemoryStore
 from night_brownie.poller import GitHubPoller
 from night_brownie.queue import TaskQueue
@@ -179,7 +179,7 @@ def _run_start(args: Any) -> None:
 
         if agent_specs:
             try:
-                container_manager = ContainerManager(backend_from_config(ContainersConfig()))
+                container_manager = ContainerManager(backend_from_config(config.containers))
             except ContainerError as exc:
                 print(f"Error: {exc}", file=sys.stderr)
                 sys.exit(1)
