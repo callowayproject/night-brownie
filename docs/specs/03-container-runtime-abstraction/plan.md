@@ -258,6 +258,32 @@ replace all Docker SDK calls with backend calls.
 
 ---
 
+## Phase 8 — Documentation Updates
+
+**Goal:** Update user-facing docs to reflect the new `containers:` config section
+and the public API surface introduced by this feature.
+
+- [x] `docs/reference/configuration.md`:
+    - Add `containers` row to the Top-Level Sections table (optional, defaults to Docker)
+    - Add a `## containers` section: description, fields table (`backend`, `socket_url`), and three YAML examples
+      (docker, podman, apple)
+    - Add a `containers:` snippet to the Complete Example block
+- [x] `docs/reference/api/containers.md`:
+    - Expand beyond `::: night_brownie.containers` to add directives for each submodule:
+      `base`, `manager`, `docker`, `podman`, `apple`
+- [x] `docs/explanation.md`:
+    - Line 62: "Docker containers are isolated processes" → "Agent containers are isolated processes"
+    - Add a sentence noting that the harness supports Docker, Podman, and Apple Containers via a pluggable backend
+
+**Acceptance criteria:**
+
+- [x] `docs/reference/configuration.md` documents all three backend examples
+- [x] `docs/reference/api/containers.md` references all five submodules
+- [x] `docs/explanation.md` does not imply Docker-only operation
+- [x] `pre-commit run --all-files` passes
+
+---
+
 ## Human Review Checkpoint
 
 - [ ] Review complete

@@ -58,10 +58,12 @@ and trust that every agent you run respects it.
 With the harness as the gatekeeper, the constraint is enforced once, centrally.
 
 **Credential isolation.**
-Docker containers are isolated processes, but they're not hardened sandboxes.
+Agent containers are isolated processes, but they're not hardened sandboxes.
 If an issue body contained a prompt injection that convinced an agent to exfiltrate environment variables,
 a direct-token agent would leak your GitHub token.
 A Night Brownie agent has no token to leak.
+Night Brownie supports Docker, Podman, and Apple Containers via a pluggable backend —
+the security model is the same regardless of which runtime you choose.
 
 ## Memory and Context
 
