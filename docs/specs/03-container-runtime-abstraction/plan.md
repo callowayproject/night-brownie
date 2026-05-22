@@ -234,7 +234,7 @@ replace all Docker SDK calls with backend calls.
 
 **Goal:** Wire the backend factory into wherever `ContainerManager` is instantiated; run all checks.
 
-- [ ] In `server.py` (or equivalent startup path), update to:
+- [x] In `server.py` (or equivalent startup path), update to:
 
     ```python
     from night_brownie.containers import ContainerManager
@@ -244,16 +244,17 @@ replace all Docker SDK calls with backend calls.
     container_manager = ContainerManager(backend)
     ```
 
-- [ ] Run `pre-commit run --all-files` — fix any ruff/mypy/interrogate issues
-- [ ] Run `uv run pytest --agent-digest=term` — confirm ≥ 85% line / ≥ 80% branch coverage
-- [ ] Update `docs/specs/index.md` to mark feature 03 as implemented
-- [ ] Confirm `containers.py` is deleted (not lingering alongside the package)
+    (Wired in `__main__.py` — the actual startup path — in Phase 6.)
+- [x] Run `pre-commit run --all-files` — fix any ruff/mypy/interrogate issues
+- [x] Run `uv run pytest --agent-digest=term` — confirm ≥ 85% line / ≥ 80% branch coverage
+- [x] Update `docs/specs/index.md` to mark feature 03 as implemented
+- [x] Confirm `containers.py` is deleted (not lingering alongside the package)
 
 **Acceptance criteria:**
 
-- [ ] `from night_brownie.containers import ContainerManager, ContainerError` still works
-- [ ] All pre-commit hooks pass
-- [ ] Full test suite green with coverage targets met
+- [x] `from night_brownie.containers import ContainerManager, ContainerError` still works
+- [x] All pre-commit hooks pass
+- [x] Full test suite green with coverage targets met
 
 ---
 
