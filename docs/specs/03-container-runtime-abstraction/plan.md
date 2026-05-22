@@ -204,7 +204,7 @@ replace all Docker SDK calls with backend calls.
 
 **Goal:** Replace Docker-coupled `test_containers.py` with backend-agnostic `test_manager.py`.
 
-- [ ] Create `tests/test_manager.py` — all `ContainerManager` tests inject a `MagicMock()` backend:
+- [x] Create `tests/test_manager.py` — all `ContainerManager` tests inject a `MagicMock()` backend:
     - `@pytest.fixture` `mock_backend()` — `MagicMock(spec=ContainerBackend)`
     - `TestContainerManagerInit` — `ContainerManager(mock_backend)` succeeds; no Docker import
     - `TestStartAgentImageHandling` — mock `backend.image_exists` return value; assert `pull_image` called or not
@@ -214,19 +214,19 @@ replace all Docker SDK calls with backend calls.
     - `TestContainerRestartOnExit` — assert `run_container` called twice; `_handles` updated;
       `_failed` populated on second exit
     - `TestRestartPreservesEnvironment` — env stored in `_envs` passed to second `run_container` call
-- [ ] Write `tests/test_backend_from_config.py`:
+- [x] Write `tests/test_backend_from_config.py`:
     - Parametrize over `("docker", DockerBackend)`, `("podman", PodmanBackend)`, `("apple", AppleContainersBackend)`
     - Mock each backend's `__init__` to avoid real socket/subprocess calls
     - Assert correct class returned
     - Assert `ContainerError` raised for unknown backend string
-- [ ] Delete `tests/test_containers.py` (replaced by `test_manager.py`)
+- [x] Delete `tests/test_containers.py` (replaced by `test_manager.py`)
 
 **Acceptance criteria:**
 
-- [ ] `test_manager.py` has ≥ same coverage as old `test_containers.py`
-- [ ] `test_backend_from_config.py` covers all factory branches
-- [ ] No test imports `docker` or calls `docker.from_env` (backend tests excluded)
-- [ ] `uv run pytest --agent-digest=term` passes with coverage ≥ 85% line / ≥ 80% branch
+- [x] `test_manager.py` has ≥ same coverage as old `test_containers.py`
+- [x] `test_backend_from_config.py` covers all factory branches
+- [x] No test imports `docker` or calls `docker.from_env` (backend tests excluded)
+- [x] `uv run pytest --agent-digest=term` passes with coverage ≥ 85% line / ≥ 80% branch
 
 ---
 
