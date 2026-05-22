@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Literal
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
+if TYPE_CHECKING:
+    from night_brownie.config import ContainersConfig
 
 
 class ContainerError(Exception):
@@ -73,13 +74,6 @@ class ContainerBackend(ABC):
         Returns:
             Container log output as bytes.
         """
-
-
-class ContainersConfig(BaseModel):
-    """Configuration for the container runtime backend."""
-
-    backend: Literal["docker", "podman", "apple"] = "docker"
-    socket_url: str | None = None
 
 
 def backend_from_config(config: ContainersConfig) -> ContainerBackend:

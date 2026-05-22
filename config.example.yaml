@@ -21,6 +21,24 @@ polling:
 #   drain_interval_seconds: 10       # how often (seconds) the harness drains completed tasks
 #   requeue_interval_seconds: 60     # how often (seconds) the harness checks for stale tasks
 
+# containers:
+#   backend: docker                  # docker (default) | podman | apple
+#   # socket_url: null               # omit to use the default socket for docker/podman
+
+# --- Docker with a custom socket ---
+# containers:
+#   backend: docker
+#   socket_url: "unix:///var/run/docker.sock"
+
+# --- Rootless Podman ---
+# containers:
+#   backend: podman
+#   socket_url: "unix:///run/user/1000/podman/podman.sock"
+
+# --- Apple Containers (macOS only) ---
+# containers:
+#   backend: apple
+
 repos:
   - owner: callowayproject
     name: bump-my-version
