@@ -34,7 +34,7 @@ class TestPodmanBackendInit:
         import docker.errors
 
         mocker.patch("docker.DockerClient", side_effect=docker.errors.DockerException("no socket"))
-        with pytest.raises(ContainerError, match="Docker"):
+        with pytest.raises(ContainerError, match="Podman"):
             PodmanBackend()
 
 
