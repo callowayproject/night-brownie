@@ -28,7 +28,7 @@ dependencies = [
     "opentelemetry-exporter-otlp",
     "PyYAML>=6.0",
     "PyGithub>=2.0",
-    "litellm>=1.84.0",
+    "litellm>=1.85.1",
     "httpxyz>=0.28.1",
     "docker>=7.1.0",
 ]
@@ -94,6 +94,9 @@ exclude = ["node_modules", "build", "dist", "CHANGELOG.md", ".memsearch"]
 include = ["docs/*.md", "README.md"]
 respect-gitignore = true
 flavor = "mkdocs"
+
+[tool.rumdl.MD046]
+style = "fenced"
 
 [tool.rumdl.MD063]
 style = "sentence_case"

@@ -377,20 +377,38 @@ class TestMainContainerStartup:
         captured = capsys.readouterr()
         assert "no docker" in captured.err
 
-    def test_start_agent_called_with_image_and_port(self, tmp_path: Path, mocker) -> None:
+    @pytest.mark.asyncio
+    async def test_start_agent_called_with_image_and_port(self, tmp_path: Path, mocker) -> None:
         """start_agent() is called with the image and port from agent config."""
-        config_path = tmp_path / "config.yaml"
-        _write_config_with_agent(config_path)
+        from unittest.mock import AsyncMock
 
-        mocker.patch("night_brownie.__main__.MemoryStore")
-        mocker.patch("night_brownie.__main__.GitHubPoller")
-        mocker.patch("night_brownie.__main__.Dispatcher")
-        mocker.patch("night_brownie.__main__.asyncio.run", side_effect=lambda c: c.close())
+        agent_config_path = tmp_path / "agent_config.yaml"
+        _write_config_with_agent(agent_config_path)
+        config = load_config(agent_config_path)
+
+        mock_memory = mocker.MagicMock()
+        mock_poller = mocker.MagicMock()
+        mock_poller.run = AsyncMock()
+        mock_dispatcher = mocker.MagicMock()
+        mock_server = mocker.MagicMock()
+        mock_server.serve = AsyncMock()
+        mocker.patch("uvicorn.Server", return_value=mock_server)
+        mocker.patch("uvicorn.Config")
+        mocker.patch("night_brownie.__main__.Router")
+
         mock_cm = mocker.MagicMock()
-        mock_cm.start_agent.return_value = "http://localhost:9001"
-        mocker.patch("night_brownie.__main__.ContainerManager", return_value=mock_cm)
+        mock_cm.start_agent = AsyncMock(return_value="http://localhost:9001")
 
-        main(["start", "--config", str(config_path)])
+        await _run_loop(
+            config,
+            mock_memory,
+            mock_poller,
+            mock_dispatcher,
+            "0.0.0.0",
+            8000,
+            mock_cm,
+            agent_specs=[("issue-triage", "night-brownie-issue-triage:latest", 9001)],
+        )
 
         mock_cm.start_agent.assert_called_once_with(
             "issue-triage",
@@ -402,20 +420,39 @@ class TestMainContainerStartup:
             },
         )
 
-    def test_start_agent_error_exits_nonzero(self, tmp_path: Path, mocker) -> None:
+    @pytest.mark.asyncio
+    async def test_start_agent_error_exits_nonzero(self, tmp_path: Path, mocker) -> None:
         """ContainerError from start_agent() exits with a non-zero code."""
-        config_path = tmp_path / "config.yaml"
-        _write_config_with_agent(config_path)
+        from unittest.mock import AsyncMock
 
-        mocker.patch("night_brownie.__main__.MemoryStore")
-        mocker.patch("night_brownie.__main__.GitHubPoller")
-        mocker.patch("night_brownie.__main__.Dispatcher")
+        agent_config_path = tmp_path / "agent_config.yaml"
+        _write_config_with_agent(agent_config_path)
+        config = load_config(agent_config_path)
+
+        mock_memory = mocker.MagicMock()
+        mock_poller = mocker.MagicMock()
+        mock_poller.run = AsyncMock()
+        mock_dispatcher = mocker.MagicMock()
+        mock_server = mocker.MagicMock()
+        mock_server.serve = AsyncMock()
+        mocker.patch("uvicorn.Server", return_value=mock_server)
+        mocker.patch("uvicorn.Config")
+        mocker.patch("night_brownie.__main__.Router")
+
         mock_cm = mocker.MagicMock()
-        mock_cm.start_agent.side_effect = ContainerError("pull failed")
-        mocker.patch("night_brownie.__main__.ContainerManager", return_value=mock_cm)
+        mock_cm.start_agent = AsyncMock(side_effect=ContainerError("pull failed"))
 
         with pytest.raises(SystemExit) as exc_info:
-            main(["start", "--config", str(config_path)])
+            await _run_loop(
+                config,
+                mock_memory,
+                mock_poller,
+                mock_dispatcher,
+                "0.0.0.0",
+                8000,
+                mock_cm,
+                agent_specs=[("issue-triage", "night-brownie-issue-triage:latest", 9001)],
+            )
 
         assert exc_info.value.code != 0
 

@@ -29,12 +29,13 @@ model: "${LLM_PROVIDER}-${LLM_VERSION}"  # multiple references in one string
 
 ## Top-Level Sections
 
-| Section                 | Required | Description                     |
-|-------------------------|----------|---------------------------------|
-| [`identity`](#identity) | Yes      | Bot GitHub credentials          |
-| [`llm`](#llm)           | Yes      | LLM backend to use              |
-| [`polling`](#polling)   | No       | Polling interval (has defaults) |
-| [`repos`](#repos)       | No       | Repositories to monitor         |
+| Section                           | Required | Description                             |
+|-----------------------------------|----------|-----------------------------------------|
+| [`identity`](#identity)           | Yes      | Bot GitHub credentials                  |
+| [`llm`](#llm)                     | Yes      | LLM backend to use                      |
+| [`containers`](#containers)       | No       | Container runtime (defaults to Docker)  |
+| [`polling`](#polling)             | No       | Polling interval (has defaults)         |
+| [`repos`](#repos)                 | No       | Repositories to monitor                 |
 
 ## `identity`
 
@@ -73,6 +74,55 @@ llm:
 | `provider` | string | Yes      | LLM provider identifier. Supported values: `anthropic`, `ollama`. |
 | `model`    | string | Yes      | Model name or identifier passed to the provider (e.g., `claude-sonnet-4-6`, `llama3`). |
 | `api_key`  | string | No       | API key for the provider. Omit this field entirely when using `ollama` or another local provider that does not require a key. |
+
+## `containers`
+
+Container runtime configuration.
+**Optional.**
+When absent, Night Brownie defaults to Docker using the system socket.
+
+```yaml
+containers:
+  backend: docker
+```
+
+### Fields
+
+| Field        | Type   | Required | Default    | Description                                                                                                                                           |
+|--------------|--------|----------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `backend`    | string | No       | `"docker"` | Container runtime to use. Supported values: `docker`, `podman`, `apple`. |
+| `socket_url` | string | No       | —          | Override socket path for Docker or Podman (e.g. `unix:///run/user/1000/podman/podman.sock`). Ignored by the `apple` backend. |
+
+### Examples
+
+#### Default — Docker, system socket
+
+```yaml
+containers:
+  backend: docker
+```
+
+#### Rootless Podman
+
+```yaml
+containers:
+  backend: podman
+  socket_url: "unix:///run/user/1000/podman/podman.sock"
+```
+
+#### Apple Containers (macOS only)
+
+```yaml
+containers:
+  backend: apple
+```
+
+> **Security note:** When using the `apple` backend, environment variables
+> (including LLM API keys) are passed as `--env KEY=VALUE` arguments to the `container` CLI subprocess.
+> These arguments are **visible in `ps` output and the process argument list** on macOS,
+> which is a meaningful exposure difference compared to Docker and Podman.
+> Avoid using `AppleContainersBackend` with long-lived secrets in production
+> until a secrets-file mechanism is available.
 
 ## `polling`
 
@@ -191,6 +241,9 @@ llm:
   provider: anthropic
   model: claude-sonnet-4-6
   api_key: "${ANTHROPIC_API_KEY}"
+
+containers:
+  backend: docker
 
 polling:
   interval_seconds: 60
