@@ -238,6 +238,41 @@ async def _start_agent_containers(
     return started
 
 
+def _on_poller_done(task: asyncio.Task) -> None:  # type: ignore[type-arg]
+    """Log unexpected poller task termination.
+
+    Args:
+        task: The completed poller asyncio task.
+    """
+    if not task.cancelled():
+        exc = task.exception()
+        if exc is not None:
+            logger.critical("Poller task crashed unexpectedly", exc_info=exc)
+
+
+async def _dispatch_event(event: dict[str, Any], router: Router, dispatcher: Dispatcher) -> None:
+    """Route one poller event and dispatch it to the appropriate agent.
+
+    Args:
+        event: Event dict with ``repo``, ``issue_number``, and ``payload``.
+        router: Configured router used to resolve the target agent.
+        dispatcher: Dispatcher used to send the task to the agent.
+    """
+    repo = event["repo"]
+    issue_number = event["issue_number"]
+    logger.info("Issue event", repo=repo, issue_number=issue_number)
+    try:
+        route_target = router.route("issue.triage", repo)
+    except RoutingError:
+        logger.warning("Repo not in config — skipping", repo=repo)
+        return
+    if route_target is None:
+        logger.debug("No agent handles issue.triage for this repo", repo=repo)
+        return
+    logger.info("Routing to agent", repo=repo, issue_number=issue_number, agent_url=route_target.url)
+    await dispatcher.dispatch(event, route_target)
+
+
 async def _run_loop(
     config: NightBrownieConfig,
     memory: MemoryStore,
@@ -251,9 +286,10 @@ async def _run_loop(
 ) -> None:
     """Run the poll loop and HTTP server concurrently.
 
-    The poller is started as an asyncio task alongside the uvicorn server.
-    On shutdown (SIGINT/SIGTERM), the poller task is cancelled cleanly and
-    any managed containers are stopped.
+    The HTTP server is started first and must be accepting connections before
+    agent containers are launched, because containers call back to the harness
+    during their own startup lifespan.  On shutdown (SIGINT/SIGTERM), the poller
+    task is cancelled cleanly and any managed containers are stopped.
 
     Args:
         config: Validated runtime configuration.
@@ -269,11 +305,9 @@ async def _run_loop(
         agent_specs: List of (agent_type, image, agent_port) tuples to start before polling.
             Each container is started and its URL registered with the router.
     """
-    started_urls = await _start_agent_containers(config, container_manager, agent_specs, port)
-
     router = Router(config)
 
-    for agent_type, url in {**(agent_urls or {}), **started_urls}.items():
+    for agent_type, url in (agent_urls or {}).items():
         router.register_url(agent_type, url)
 
     async def on_event(repo_config: RepoConfig, event: dict[str, Any]) -> None:
@@ -283,24 +317,7 @@ async def _run_loop(
             repo_config: The repo configuration that produced this event.
             event: Event dict with `repo`, `issue_number`, and `payload`.
         """
-        repo = event["repo"]
-        issue_number = event["issue_number"]
-        logger.info("Issue event", repo=repo, issue_number=issue_number)
-        try:
-            route_target = router.route("issue.triage", repo)
-        except RoutingError:
-            logger.warning("Repo not in config — skipping", repo=repo)
-            return
-        if route_target is None:
-            logger.debug("No agent handles issue.triage for this repo", repo=repo)
-            return
-        logger.info(
-            "Routing to agent",
-            repo=repo,
-            issue_number=issue_number,
-            agent_url=route_target.url,
-        )
-        await dispatcher.dispatch(event, route_target)
+        await _dispatch_event(event, router, dispatcher)
 
     uv_server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_config=None))
 
@@ -312,18 +329,21 @@ async def _run_loop(
     )
 
     poller_task = asyncio.create_task(poller.run(config.repos, config.polling.interval_seconds, on_event))
-
-    def _on_poller_done(task: asyncio.Task) -> None:
-        """Log unexpected poller task termination."""
-        if not task.cancelled():
-            exc = task.exception()
-            if exc is not None:
-                logger.critical("Poller task crashed unexpectedly", exc_info=exc)
-
     poller_task.add_done_callback(_on_poller_done)
 
+    # Start the HTTP server as a background task and wait until it is bound and
+    # accepting connections.  Agent containers call back to the harness during
+    # their own startup, so the server must be ready before containers launch.
+    server_task = asyncio.create_task(uv_server.serve())
+    while not uv_server.started:
+        await asyncio.sleep(0.05)
+
+    started_urls = await _start_agent_containers(config, container_manager, agent_specs, port)
+    for agent_type, url in started_urls.items():
+        router.register_url(agent_type, url)
+
     try:
-        await uv_server.serve()
+        await server_task
     finally:
         poller_task.cancel()
         try:

@@ -74,9 +74,9 @@ class DockerBackend(ContainerBackend):
             detach=True,
             ports={"8000/tcp": port},
             name=name,
-            remove=True,
             environment=environment,
         )
+        assert container.id is not None, "Docker returned a container with no ID"
         return container.id
 
     def stop_container(self, handle: str) -> None:
@@ -89,7 +89,11 @@ class DockerBackend(ContainerBackend):
             ContainerError: If the container cannot be found or stopped.
         """
         try:
-            self._client.containers.get(handle).stop()
+            container = self._client.containers.get(handle)
+            container.stop()
+            container.remove()
+        except docker.errors.NotFound:
+            pass  # already gone — treat as success
         except docker.errors.DockerException as exc:
             raise ContainerError(f"Failed to stop container {handle!r}: {exc}") from exc
 

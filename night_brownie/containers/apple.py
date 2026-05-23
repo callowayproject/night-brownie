@@ -60,7 +60,7 @@ class AppleContainersBackend(ContainerBackend):
         Returns:
             The container name (stripped stdout) as the handle.
         """
-        cmd = ["container", "run", "--detach", "--rm", "--name", name, "-p", f"{port}:8000"]
+        cmd = ["container", "run", "--detach", "--name", name, "-p", f"{port}:8000"]
         if environment:
             for key, val in environment.items():
                 if "\n" in key or "\n" in val or "\0" in key or "\0" in val:
@@ -77,6 +77,7 @@ class AppleContainersBackend(ContainerBackend):
             handle: Container name returned by :meth:`run_container`.
         """
         subprocess.run(["container", "stop", handle], check=True)  # noqa: S603 S607
+        subprocess.run(["container", "rm", handle], check=False)  # noqa: S603 S607
 
     def get_logs(self, handle: str) -> bytes:
         """Return logs for the container identified by *handle*.

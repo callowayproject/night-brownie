@@ -130,7 +130,6 @@ class TestDockerBackendRunContainer:
             detach=True,
             ports={"8000/tcp": 9001},
             name="night-brownie-triage",
-            remove=True,
             environment={"FOO": "bar"},
         )
         assert result == "abc123"
@@ -183,14 +182,13 @@ class TestDockerBackendStopContainer:
 class TestDockerBackendStopContainerErrors:
     """DockerBackend.stop_container error handling."""
 
-    def test_wraps_not_found_as_container_error(self, mocker):
-        """stop_container raises ContainerError when container is not found."""
+    def test_ignores_not_found_on_stop(self, mocker):
+        """stop_container silently succeeds when the container is already gone."""
         import docker.errors
 
         backend, client = _make_backend(mocker)
         client.containers.get.side_effect = docker.errors.NotFound("not found")
-        with pytest.raises(ContainerError, match="stop"):
-            backend.stop_container("gone123")
+        backend.stop_container("gone123")  # must not raise
 
     def test_wraps_docker_exception_as_container_error(self, mocker):
         """stop_container raises ContainerError for generic DockerException."""

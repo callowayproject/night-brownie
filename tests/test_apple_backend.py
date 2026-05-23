@@ -79,7 +79,7 @@ class TestAppleContainersBackendRunContainer:
         assert result == "container-handle-abc"
 
     def test_correct_argv_without_env(self, mocker):
-        """run_container builds the correct argv: detach, rm, name, port mapping, image."""
+        """run_container builds the correct argv: detach, name, port mapping, image (no --rm)."""
         mock_run = mocker.patch("subprocess.run")
         mock_run.return_value = MagicMock(stdout="handle\n")
         backend = _make_backend()
@@ -88,7 +88,6 @@ class TestAppleContainersBackendRunContainer:
             "container",
             "run",
             "--detach",
-            "--rm",
             "--name",
             "night-brownie-triage",
             "-p",
@@ -138,11 +137,13 @@ class TestAppleContainersBackendStopContainer:
     """AppleContainersBackend.stop_container."""
 
     def test_calls_container_stop(self, mocker):
-        """stop_container runs `container stop <handle>`."""
+        """stop_container runs `container stop` then `container rm`."""
         mock_run = mocker.patch("subprocess.run")
         backend = _make_backend()
         backend.stop_container("container-handle-abc")
-        mock_run.assert_called_once_with(["container", "stop", "container-handle-abc"], check=True)
+        assert mock_run.call_count == 2
+        mock_run.assert_any_call(["container", "stop", "container-handle-abc"], check=True)
+        mock_run.assert_any_call(["container", "rm", "container-handle-abc"], check=False)
 
 
 class TestAppleContainersBackendGetLogs:
