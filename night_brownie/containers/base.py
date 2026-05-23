@@ -64,7 +64,7 @@ class ContainerBackend(ABC):
         """Stop the container identified by *handle*.
 
         Args:
-            handle: Opaque handle returned by :meth:`run_container`.
+            handle: Opaque handle returned by `run_container`.
         """
 
     @abstractmethod
@@ -72,7 +72,7 @@ class ContainerBackend(ABC):
         """Return logs for the container identified by *handle*.
 
         Args:
-            handle: Opaque handle returned by :meth:`run_container`.
+            handle: Opaque handle returned by `run_container`.
 
         Returns:
             Container log output as bytes.

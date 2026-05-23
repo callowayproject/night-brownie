@@ -10,11 +10,11 @@ from night_brownie.containers.base import ContainerBackend, ContainerError
 class AppleContainersBackend(ContainerBackend):
     """ContainerBackend implementation using the Apple Containers CLI.
 
-    Invokes the ``container`` CLI tool available on macOS.
+    Invokes the `container` CLI tool available on macOS.
     """
 
     def image_exists(self, image: str) -> bool:
-        """Return True if *image* is present in the local Apple Containers registry.
+        """Return True if `image` is present in the local Apple Containers registry.
 
         Args:
             image: Image name/tag to check.
@@ -34,7 +34,7 @@ class AppleContainersBackend(ContainerBackend):
         return image in result.stdout
 
     def pull_image(self, image: str) -> None:
-        """Pull *image* from the registry using the Apple Containers CLI.
+        """Pull `image` from the registry using the Apple Containers CLI.
 
         Args:
             image: Image name/tag to pull.
@@ -71,22 +71,22 @@ class AppleContainersBackend(ContainerBackend):
         return result.stdout.strip()
 
     def stop_container(self, handle: str) -> None:
-        """Stop the container identified by *handle*.
+        """Stop the container identified by `handle`.
 
         Args:
-            handle: Container name returned by :meth:`run_container`.
+            handle: Container name returned by `run_container`.
         """
         subprocess.run(["container", "stop", handle], check=True)  # noqa: S603 S607
         subprocess.run(["container", "rm", handle], check=False)  # noqa: S603 S607
 
     def get_logs(self, handle: str) -> bytes:
-        """Return logs for the container identified by *handle*.
+        """Return logs for the container identified by `handle`.
 
         Args:
-            handle: Container name returned by :meth:`run_container`.
+            handle: Container name returned by `run_container`.
 
         Returns:
-            Combined stdout and stderr bytes from ``container logs``.
+            Combined stdout and stderr bytes from `container logs`.
         """
         result = subprocess.run(["container", "logs", handle], capture_output=True, check=True)  # noqa: S603 S607
         return result.stdout + result.stderr

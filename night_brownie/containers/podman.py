@@ -15,12 +15,17 @@ class PodmanBackend(DockerBackend):
     Defaults to the XDG rootless socket path for the current user.
     Pass *socket_url* explicitly for rootful Podman or non-standard paths.
 
+    Attributes:
+        backend_name: Name of the backend, used for error messages.
+
     Args:
         socket_url: Optional Podman socket URL. Defaults to the uid-based XDG path.
 
     Raises:
         ContainerError: If the Podman socket is unavailable at construction time.
     """
+
+    backend_name = "Podman"
 
     def __init__(self, socket_url: str | None = None) -> None:
         url = socket_url if socket_url is not None else _DEFAULT_SOCKET_TEMPLATE.format(uid=os.getuid())

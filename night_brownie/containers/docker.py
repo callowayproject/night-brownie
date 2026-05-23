@@ -11,12 +11,17 @@ from night_brownie.containers.base import ContainerBackend, ContainerError
 class DockerBackend(ContainerBackend):
     """ContainerBackend implementation using the Docker SDK.
 
+    Attributes:
+        backend_name: Name of the backend, used for error messages.
+
     Args:
-        socket_url: Optional Docker socket URL. When omitted, uses ``docker.from_env()``.
+        socket_url: Optional Docker socket URL. When omitted, uses `docker.from_env()`.
 
     Raises:
         ContainerError: If the Docker socket is unavailable at construction time.
     """
+
+    backend_name = "Docker"
 
     def __init__(self, socket_url: str | None = None) -> None:
         try:
@@ -25,10 +30,12 @@ class DockerBackend(ContainerBackend):
             else:
                 self._client = docker.from_env()
         except docker.errors.DockerException as exc:
-            raise ContainerError(f"Docker socket unavailable — is Docker running? ({exc})") from exc
+            raise ContainerError(
+                f"{self.backend_name} socket unavailable — is {self.backend_name} running? ({exc})"
+            ) from exc
 
     def image_exists(self, image: str) -> bool:
-        """Return True if *image* is present in the local Docker registry.
+        """Return True if `image` is present in the local Docker registry.
 
         Args:
             image: Image name/tag to check.
@@ -43,7 +50,7 @@ class DockerBackend(ContainerBackend):
             return False
 
     def pull_image(self, image: str) -> None:
-        """Pull *image* from the registry.
+        """Pull `image` from the registry.
 
         Args:
             image: Image name/tag to pull.
@@ -68,6 +75,9 @@ class DockerBackend(ContainerBackend):
 
         Returns:
             The Docker container ID string.
+
+        Raises:
+            ContainerError: If the container fails to start.
         """
         container = self._client.containers.run(
             image,
@@ -76,14 +86,16 @@ class DockerBackend(ContainerBackend):
             name=name,
             environment=environment,
         )
-        assert container.id is not None, "Docker returned a container with no ID"
-        return container.id
+        if container:
+            return container.id
+        else:
+            raise ContainerError(f"Failed to start container {name!r} with image {image!r}")
 
     def stop_container(self, handle: str) -> None:
-        """Stop the container identified by *handle*.
+        """Stop the container identified by `handle`.
 
         Args:
-            handle: Container ID returned by :meth:`run_container`.
+            handle: Container ID returned by `run_container`.
 
         Raises:
             ContainerError: If the container cannot be found or stopped.
@@ -98,10 +110,10 @@ class DockerBackend(ContainerBackend):
             raise ContainerError(f"Failed to stop container {handle!r}: {exc}") from exc
 
     def get_logs(self, handle: str) -> bytes:
-        """Return logs for the container identified by *handle*.
+        """Return logs for the container identified by `handle`.
 
         Args:
-            handle: Container ID returned by :meth:`run_container`.
+            handle: Container ID returned by `run_container`.
 
         Returns:
             Container log output as bytes.
@@ -110,7 +122,8 @@ class DockerBackend(ContainerBackend):
             ContainerError: If the container cannot be found.
         """
         try:
-            logs = self._client.containers.get(handle).logs()
+            container = self._client.containers.get(handle)
+            logs = container.logs()
             return logs if isinstance(logs, bytes) else b"".join(logs)
         except docker.errors.DockerException as exc:
             raise ContainerError(f"Failed to get logs for container {handle!r}: {exc}") from exc
