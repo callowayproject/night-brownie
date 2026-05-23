@@ -75,7 +75,7 @@ extra_css = [
     "assets/css/colors_and_type.css",
     "assets/css/header.css",
     "assets/css/content.css",
-#    "assets/css/nav.css"
+    "assets/css/nav.css"
 ]
 
 # With the `extra_javascript` option you can add your own JavaScript to your

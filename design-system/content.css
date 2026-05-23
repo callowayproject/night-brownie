@@ -20,7 +20,7 @@
   font-size: var(--fs-xs);
   margin: var(--space-sm);
   opacity: 0;
-  outline-color: var(--site-signal-amber);
+  outline-color: var(--biolume-cyan);
   padding: var(--space-xs) var(--space-sm);
   position: fixed;
   transform: translateY(var(--space-xs));
@@ -97,12 +97,12 @@
   }
 
   .sidebar-item.active {
-    color: var(--blueprint-steel);
+    color: var(--biolume-cyan);
     font-weight: var(--fw-bold);
   }
 
   .sidebar-item:hover {
-    color: var(--site-signal-amber);
+    color: var(--biolume-cyan);
     background-color: var(--surface-contrast);
   }
 }
@@ -119,7 +119,7 @@
   font-weight: var(--fw-bold);
   letter-spacing: var(--ls-eyebrow);
   text-transform: uppercase;
-  color: var(--blueprint-steel);
+  color: var(--biolume-violet);
   padding: var(--space-md) var(--space-lg) var(--space-sm);
   margin: 0;
 }
@@ -147,7 +147,7 @@
     font-weight: var(--fw-semibold);
     letter-spacing: var(--ls-eyebrow);
     text-transform: uppercase;
-    color: var(--blueprint-steel);
+    color: var(--biolume-violet);
     margin-bottom: var(--space-md);
   }
 
@@ -168,11 +168,11 @@
   }
 
   .toc__list a:hover {
-    color: var(--site-signal-amber);
+    color: var(--biolume-cyan);
   }
 
   .toc__list a.active {
-    color: var(--blueprint-steel);
+    color: var(--biolume-cyan);
     font-weight: var(--fw-bold);
   }
 
@@ -225,7 +225,7 @@
 
   li.active {
     font-weight: var(--fw-bold);
-    color: var(--blueprint-steel);
+    color: var(--biolume-cyan);
   }
 }
 
@@ -270,16 +270,29 @@ article ol {
 }
 
 article dl {
-  margin-bottom: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-sm) var(--space-lg);
+  align-items: baseline;
 }
 
 article dl dt {
+  font-family: var(--font-mono);
   font-weight: var(--fw-bold);
+  color: var(--moonlit-silver);
+  font-size: var(--fs-body-sm);
+  background-color: var(--surface-sidebar);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  justify-self: start;
 }
 
 article dl dd {
-  padding-left: var(--space-lg);
+  padding-left: 0;
+  margin-left: 0;
   margin-bottom: var(--space-sm);
+  color: var(--fg-1);
 }
 
 article dl dd p:last-child {
@@ -287,9 +300,20 @@ article dl dd p:last-child {
 }
 
 article dl dd + dt {
-  border-top: 1px solid var(--border-default);
-  padding-top: var(--space-md);
-  margin-top: var(--space-xs);
+  grid-column: 1;
+}
+
+@media screen and (max-width: 767px) {
+  article dl {
+    display: block;
+  }
+  article dl dt {
+    margin-bottom: var(--space-xs);
+  }
+  article dl dd {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+  }
 }
 
 article details {
@@ -327,7 +351,7 @@ footer nav {
   margin-bottom: var(--space-sm);
   margin-top: var(--space-md);
   max-width: 100%;
-  outline-color: var(--site-signal-amber);
+  outline-color: var(--biolume-cyan);
   overflow: hidden;
   text-decoration: none;
   transition: color 150ms var(--ease-standard);
@@ -342,7 +366,7 @@ footer nav {
   margin-left: auto;
   margin-top: var(--space-md);
   max-width: 100%;
-  outline-color: var(--site-signal-amber);
+  outline-color: var(--biolume-cyan);
   overflow: hidden;
   text-decoration: none;
   transition: color 150ms var(--ease-standard);
@@ -350,7 +374,7 @@ footer nav {
 
 .footer__link--prev:hover,
 .footer__link--next:hover {
-  color: var(--site-signal-amber);
+  color: var(--biolume-cyan);
 }
 
 .footer__button {
@@ -467,7 +491,7 @@ pre code {
 }
 
 .tag.async {
-  background: var(--blueprint-steel);
+  background: var(--midnight-indigo);
   color: var(--fg-on-dark);
   border-color: transparent;
 }
@@ -475,65 +499,157 @@ pre code {
 /* ── Tables ────────────────────────────────────────────── */
 
 table {
-  font-size: 1em;
+  font-size: var(--fs-body-sm);
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--space-lg);
+}
+
+th {
+  background-color: var(--surface-sidebar);
+  color: var(--fg-2);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  font-size: var(--fs-eyebrow);
+  letter-spacing: var(--ls-eyebrow);
+  border-bottom: 1px solid var(--border-hairline);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+td {
+  border-bottom: 1px solid var(--border-hairline);
+  padding: var(--space-sm) var(--space-md);
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-bottom: none;
 }
 
 tbody tr:nth-child(even) {
-  background: var(--surface-tinted);
+  background: var(--surface-deep);
+}
+
+/* Responsive tables for mobile */
+@media screen and (max-width: 767px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+    width: 100% !important;
+  }
+
+  thead tr {
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+  }
+
+  tr {
+    border-bottom: 2px solid var(--border-hairline);
+    margin-bottom: var(--space-md);
+  }
+
+  td {
+    border: none;
+    position: relative;
+    padding-left: 40% !important;
+  }
+
+  td::before {
+    position: absolute;
+    left: var(--space-md);
+    width: 35%;
+    white-space: nowrap;
+    font-weight: var(--fw-bold);
+    color: var(--fg-3);
+    content: attr(data-label);
+  }
 }
 
 /* ── Doc symbols ───────────────────────────────────────── */
 
 .doc-symbol {
   font-family: var(--font-mono);
-  font-size: 0.9em;
-}
-
-h2 .doc-symbol,
-h3 .doc-symbol {
-  font-size: var(--fs-label);
-  font-weight: var(--fw-regular);
+  font-size: 0.75em;
+  padding: 0 0.4em;
+  border-radius: var(--radius-xs);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-eyebrow);
+  border: 1px solid transparent;
   vertical-align: middle;
   margin-right: var(--space-xs);
 }
 
-.doc-symbol-class {
+h2 .doc-symbol,
+h3 .doc-symbol {
+  font-size: 0.75em;
+}
+
+.doc-symbol-class,
+a .doc-symbol-class {
   color: var(--doc-symbol-class-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-class-fg), transparent 90%);
 }
 
-.doc-symbol-parameter {
+.doc-symbol-parameter,
+a .doc-symbol-parameter {
   color: var(--doc-symbol-parameter-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-parameter-fg), transparent 90%);
 }
 
-.doc-symbol-type_parameter {
+.doc-symbol-type_parameter,
+a .doc-symbol-type_parameter {
   color: var(--doc-symbol-type_parameter-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-type_parameter-fg), transparent 90%);
 }
 
-.doc-symbol-attribute {
+.doc-symbol-attribute,
+a .doc-symbol-attribute {
   color: var(--doc-symbol-attribute-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-attribute-fg), transparent 90%);
 }
 
-.doc-symbol-function {
+.doc-symbol-function,
+a .doc-symbol-function {
   color: var(--doc-symbol-function-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-function-fg), transparent 90%);
 }
 
-.doc-symbol-method {
+.doc-symbol-method,
+a .doc-symbol-method {
   color: var(--doc-symbol-method-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-method-fg), transparent 90%);
 }
 
-.doc-symbol-type_alias {
+.doc-symbol-type_alias,
+a .doc-symbol-type_alias {
   color: var(--doc-symbol-type_alias-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-type_alias-fg), transparent 90%);
 }
 
-.doc-symbol-module {
+.doc-symbol-module,
+a .doc-symbol-module {
   color: var(--doc-symbol-module-fg);
+  background-color: color-mix(in oklab, var(--doc-symbol-module-fg), transparent 90%);
 }
 
 .doc-class-name,
 .doc-function-name {
   font-weight: var(--fw-bold);
+}
+
+.doc-object-name {
+  font-family: var(--font-mono);
+  font-weight: var(--fw-bold);
+}
+
+h2 .doc-object-name {
+  color: var(--biolume-cyan); /* High contrast for primary objects */
 }
 
 .headerlink {
@@ -554,11 +670,29 @@ h3:hover .headerlink {
 /* ── Doc structure ─────────────────────────────────────── */
 
 .doc-section-title {
-  font-size: var(--fs-label);
-  font-weight: var(--fw-semibold);
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--fw-bold);
   letter-spacing: var(--ls-eyebrow);
   text-transform: uppercase;
-  color: var(--blueprint-steel);
+  color: var(--fg-2);
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  display: block;
+}
+
+.doc-signature {
+  background-color: var(--surface-deep) !important;
+  border: 1px solid var(--border-hairline) !important;
+  border-radius: var(--radius-sm);
+  padding: var(--space-sm) var(--space-md) !important;
+  margin-bottom: var(--space-md) !important;
+  font-family: var(--font-mono);
+  overflow-x: auto;
+}
+
+.doc-signature code {
+  background: transparent !important;
+  padding: 0 !important;
 }
 
 p:has(.doc-section-title) {

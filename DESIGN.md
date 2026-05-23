@@ -1,12 +1,12 @@
 ---
-name: Foreman
-description: An always-on AI co-maintainer for your GitHub repositories.
+name: Night Brownie
+description: A stealthy, always-on AI co-maintainer for your GitHub repositories.
 colors:
-  blueprint-steel: "#43527A"
-  pre-dawn-navy: "#172A54"
-  safety-tape-pale: "#FDF396"
-  site-signal-amber: "#F7B526"
-  construction-orange: "#FE6400"
+  midnight-indigo: "#1A2136"
+  twilight-purple: "#362A54"
+  biolume-cyan: "#7EE2F5"
+  moonlit-silver: "#D4D9EB"
+  velvet-black: "#0A0D14"
 typography:
   headline:
     fontFamily: "Public Sans, system-ui, -apple-system, sans-serif"
@@ -41,234 +41,122 @@ components:
     rounded: "{rounded.sm}"
     padding: "{spacing.md}"
   card-header:
-    backgroundColor: "{colors.blueprint-steel}"
+    backgroundColor: "{colors.midnight-indigo}"
     textColor: "#ffffff"
     padding: "16px 16px 24px"
   tag:
-    backgroundColor: "rgba(0, 0, 0, 0.08)"
-    textColor: "{colors.pre-dawn-navy}"
+    backgroundColor: "rgba(26, 33, 54, 0.08)"
+    textColor: "{colors.midnight-indigo}"
     rounded: "{rounded.pill}"
     padding: "2px 8px"
   doc-label:
-    backgroundColor: "{colors.blueprint-steel}"
+    backgroundColor: "{colors.midnight-indigo}"
     textColor: "#ffffff"
     rounded: "{rounded.pill}"
     padding: "0 5px"
 ---
 
-# Design System: Foreman
+# Design System: Night Brownie
 
 ## 1. Overview
 
-### Creative North Star: "The Infrastructure Manual"
+### Creative North Star: "The Midnight Helper"
 
-This is documentation built the way a night brownie runs a job site: precise, no wasted motion,
-and trustworthy on day one and day five hundred.
-The visual system earns credibility through restraint.
-A developer who lands on these docs is skeptical by default —
-they've been burned by tools with slick marketing that delivered nothing.
-Foreman's design answers that skepticism by refusing to perform.
-No animated hero numbers, no gradient blobs, no "10x your workflow" copy.
-Just dense, correct, structured information that says: this was built by people who use tools like this.
+This system is built for the quiet efficiency of a helper who works while the world sleeps.
+It values stealth, competence, and clarity.
+The visual system earns credibility through calm and focus.
+A developer who lands here is looking for a tool that solves problems without creating noise.
+Night Brownie's design reflects this by being unobtrusive, dense with information,
+and oriented toward nighttime productivity.
 
-The reference is the kind of documentation engineers save as a bookmark and actually return to:
-Docker Compose reference, the GNU Make manual, Stripe's API docs.
-These are trusted not because they look expensive, but because they have exactly what you need and nothing you don't.
-Color is used for orientation, not decoration.
-Typography is functional, not expressive.
-Every component earns its place by doing a job.
-
-This system is explicitly not an AI startup landing page.
-No glassmorphism, no hero metrics, no gradient text, no friendly onboarding flows.
-The people who need Foreman already know they need it.
-The design's job is to get out of the way and prove the tool with information.
+The reference is a well-organized toolkit or a quiet library: Everything has its place, the lighting is focused,
+and the atmosphere is one of productive calm.
+Color is used to highlight paths in the dark (biolume cyan), not for decoration.
+Typography is precise and functional.
+Every component exists to serve the primary goal: making repository maintenance invisible and effortless.
 
 ### Key Characteristics
 
-- Flat surfaces: depth through tonal color difference and 1px borders, never shadows
-- Construction-site palette: anchored in physical-world signaling colors
-- Weight-driven type hierarchy: scale and weight contrast, no decorative typefaces
-- Components that document, not decorate
+- **Midnight-First**: Optimized for dark environments and focused work.
+- **Tonal Depth**: Using subtle shifts in dark tones rather than shadows to define structure.
+- **Fixed Points of Light**: Using high-contrast cyan accents sparingly for navigation and primary actions.
+- **Dense Utility**: Information-rich components that stay out of the way until needed.
 
-## 2. Colors: The Worksite Palette
+## 2. Colors: The Midnight Palette
 
-The palette draws from a physical job site.
-Deep navy frames the structure, amber signals waypoints, and one vivid orange marks action —
-the way a hard hat orange does.
+The palette is anchored in the deep tones of night, with highlights that cut through the dark like starlight.
 
 ### Primary
 
-- **Blueprint Steel** (`oklch(42% 0.065 258)` / `--blueprint-steel`): The workhorse color.
-    Used for the navigation header, card headers, active states, and links.
-    Medium slate-blue — calm, authoritative, legible against white.
-    Not vibrant enough to feel "AI startup blue."
-- **Pre-Dawn Navy** (`oklch(23% 0.085 263)` / `--pre-dawn-navy`): The darkest brand tone.
-    Used for deep backgrounds, heavy text contexts, and the logo mark.
-    Its intensity signals depth and seriousness.
+- **Midnight Indigo** (`oklch(25% 0.08 260)` / `--midnight-indigo`): The structural anchor.
+    Used for headers, active navigation, and primary branding.
+    A deep, trustworthy indigo that signals depth and stability.
+- **Biolume Cyan** (`oklch(80% 0.12 200)` / `--biolume-cyan`): The guiding light.
+    Reserved for primary CTAs and critical orientation points.
+    Its vibrant, mascot-inspired glow makes it instantly recognizable against the dark backgrounds.
 
 ### Secondary
 
-- **Site Signal Amber** (`oklch(77% 0.17 80)` / `--site-signal-amber`): The accent.
-    Used for interactive highlights, hover states, and emphasis marks.
-    Warm and high-contrast against navy — the equivalent of a fluorescent safety marker.
-- **Construction Orange** (`oklch(63% 0.22 42)` / `--construction-orange`): The logo's action color.
-    Reserved for primary CTAs and the most important interactive actions on a page.
-    Use sparingly: its rarity is the point.
-
-### Tertiary
-
-- **Safety Tape Pale** (`oklch(95% 0.14 103)` / `--safety-tape-pale`): A pale, almost-neutral lemon-yellow.
-    Used at very low opacity as a surface tint (sidebar background wash).
-    Never as a foreground or text color — it reads as highlight, not content.
+- **Biolume Violet** (`oklch(70% 0.15 300)` / `--biolume-violet`): The character tone.
+    Used for secondary interaction accents and brand-identifying decorative elements.
+- **Moonlit Silver** (`oklch(80% 0.02 260)` / `--moonlit-silver`): The accent neutral.
+    Used for secondary borders, meta-text, and subtle interactive states.
+- **Starlight White** (`oklch(96% 0.02 200)` / `--starlight-white`): The sparkle of code.
+    Used for tiny accents, particles, and high-contrast text elements that need to feel radiant.
+- **Twilight Purple** (`oklch(30% 0.09 295)` / `--twilight-purple`): The companion tone.
+    Used for secondary structural elements and decorative accents that need to stay within the nocturnal vibe.
 
 ### Neutral
 
-- **Near-Black** (`oklch(15% 0.015 258)` / `--near-black`): The default body text color.
-    Set as `--md-default-fg-color` override.
-    Tinted toward the brand hue — pure `#000000` is forbidden.
-- **Surface whites and off-whites**: Zensical theme defaults.
-    Card bodies are white; the sidebar receives the Safety Tape Pale wash at 7% opacity
-    (`--safety-tape-pale--lightest`).
+- **Velvet Black** (`oklch(12% 0.01 260)` / `--velvet-black`): The default deep background.
+    A rich, dark surface that is easier on the eyes than pure black.
+- **Moonlit White** (`oklch(95% 0.01 260)` / `--moonlit-white`): The default text color.
+    An off-white tinted toward the brand indigo to reduce harsh contrast.
 
 ### Named Rules
 
-**The One Orange Rule.**
-Construction Orange appears on one primary action per screen.
-Its rarity is the point.
-When everything is orange, nothing is urgent.
+**The Biolume Rule.**
+Biolume Cyan should appear sparingly—ideally only once or twice on a screen.
+Like the mascot's energy, its value comes from its isolation and guidance.
 
-**The Blue-Not-Indigo Correction.**
-The Material theme's `--md-primary-fg-color--light` (`#ECB7B7`)
-and `--md-primary-fg-color--dark` (`#90030C`) are off-brand carryover defaults.
-Replace both with tints and shades derived from Blueprint Steel, not from unrelated red/pink values.
+**Tonal Layering.**
+Depth is created by moving between Velvet Black, Midnight Indigo, and Twilight Purple.
+Avoid box-shadows; use 1px borders in Moonlit Silver or tonal shifts to define boundaries.
 
 ## 3. Typography
 
-**Body Font:** Public Sans (Google Fonts, via `[project.theme.font] text = "Public Sans"` in `zensical.toml`) with
-`system-ui, -apple-system, sans-serif` fallback.
-**Label/Mono Font:** System monospace stack for code samples.
+**Body Font:** Public Sans.
+**Label/Mono Font:** System monospace.
 
-**Character:** A single neutral sans-serif family.
-No display font.
-The decision is deliberate: Foreman's documentation is a reference, not a brand expression.
-Typography serves legibility and hierarchy — the words carry the voice, not the typeface.
+Typography is tool-like.
+It doesn't perform; it informs.
 
 ### Hierarchy
 
-- **Headline** (700 weight, 1.5rem, lh 1.334): Section and page titles.
-    The primary visual anchor on any doc page.
-- **Body** (400 weight, 1rem, lh 1.6): All prose content.
-    Max line length 70ch.
-    Wider than that and the reader loses the line.
-- **Label** (500 weight, 0.8125rem, lh 1.75, ls 0.029em): Card subtitles, meta text, tag labels,
-    navigation secondary text.
-    Slightly tracked for legibility at small size.
-- **Code** (system-ui-monospace, 0.875rem): Inline code and code blocks.
-    Distinguishable from prose at a glance.
-
-### Named Rules
-
-**The Single-Family Rule.** One typeface.
-Different weights and sizes, not different families.
-Mixing a display serif into developer docs reads as a design decision made by someone who doesn't use the docs.
+- **Headline** (700 weight, 1.5rem, lh 1.334): Clear anchors.
+- **Body** (400 weight, 1rem, lh 1.6): Dense but legible prose.
+- **Label** (500 weight, 0.8125rem, lh 1.75): Meta-information and small UI elements.
 
 ## 4. Elevation
 
-This system is flat by default.
-No `box-shadow` except browser-native focus rings (which must never be removed).
-Depth is expressed through two mechanisms only:
+The system is flat and layered.
+Depth is expressed through:
 
-1. **Tonal layering**: a surface that needs separation gets a different background color —
-    typically the Safety Tape Pale wash at 4–8% opacity, or a shift from white to `--md-default-bg-color--light`.
-2. **1px borders**: when tonal difference alone isn't enough to separate an element,
-    a single 1px border in a muted tone provides the edge.
-    Use `rgba(0, 0, 0, 0.12)` or a Blueprint Steel tint at 20% opacity.
-
-Cards do not use Material's three-layer `box-shadow`.
-Use the `--card-border` token: `1px solid oklch(42% 0.065 258 / 20%)`.
-
-**The Flat-First Rule.**
-If you're reaching for `box-shadow`, try a border or background-color shift first.
-Shadows communicate that an element is physically lifted — which implies interactivity or importance.
-Use that signal only when it's true.
+1. **Background Contrast**: Darker surfaces are "further away"; lighter surfaces are "closer".
+2. **Borders**: 1px borders in `oklch` with low opacity for subtle definition.
 
 ## 5. Components
 
-### Navigation
+### Feature Cards
 
-The Material header carries Blueprint Steel (`#43527A`) as its background.
-Navigation links are white at rest, Site Signal Amber on hover and active state.
-No underlines on hover — the color change is sufficient signal.
-The sidebar receives the Safety Tape Pale wash at 7% opacity,
-giving it a distinct but subtle identity without needing a border.
+Flat, bordered cards with a tonal header (Midnight Indigo).
 
-### Cards
+### Status Tags
 
-- **Corner Style:** Gently rounded (4px radius — `{rounded.sm}`)
-- **Background:** White body; Blueprint Steel header
-- **Shadow Strategy:** None.
-    A single `1px solid rgba(67, 82, 122, 0.2)` border replaces the Material box-shadow.
-- **Header Padding:** 16px 16px 24px (extra bottom space for the header-to-content transition)
-- **Content Padding:** 16px on all sides
-- **Card Header Title:** 700 weight, 1.14em — the primary information landmark in the card
+Pill-shaped, using low-opacity Midnight Indigo backgrounds with darker text for readability on light surfaces,
+or reversed for dark.
 
-### Tags / Chips
+### Action Buttons
 
-- **Style:** Pill shape (`{rounded.pill}`), muted background (`rgba(0,0,0,0.08)`), Pre-Dawn Navy text
-- **Size:** 24px height, `{spacing.xs} {spacing.sm}` padding, label-weight type
-- **Usage:** Read-only descriptors only.
-    Not interactive unless the design explicitly requires it.
-    Interactive tags get a Blueprint Steel border.
-
-### API Doc Labels
-
-- **Style:** Pill shape (`{rounded.pill}`), Blueprint Steel background, white text
-- **Variants:** `private` (muted red), `property` (muted green), `read-only` (muted yellow).
-    Exact colors defined in `extra.css`.
-- **Size:** Small (fits inline with body text).
-    Label-weight type, no letter-spacing.
-
-### Navigation (Sidebar)
-
-- **Default state:** Body text weight, no background
-- **Active/current state:** Blueprint Steel text, 500 weight — no left-border accent stripe
-- **Hover:** Site Signal Amber text
-
-**The No-Stripe Rule.**
-No `border-left` accent stripe on sidebar items, list items, or callouts.
-Ever.
-A colored left border is decorative affectation.
-Use background tint or text color for active state.
-
-## 6. Do's and Don'ts
-
-### Do
-
-- **Do** use Blueprint Steel for primary navigation, card headers, and active states — it is the load-bearing color.
-- **Do** express depth through tonal background shifts and 1px borders instead of `box-shadow`.
-- **Do** cap body prose at 70ch line length for legibility.
-- **Do** use Construction Orange for one primary action per page — its scarcity signals importance.
-- **Do** use Site Signal Amber for hover and active interactive states across the site.
-- **Do** keep the sidebar tinted with Safety Tape Pale at 7% opacity —
-    it visually anchors the navigation zone without adding weight.
-- **Do** maintain a minimum 4.5:1 contrast ratio on all text (WCAG AA).
-
-### Don't
-
-- **Don't** use gradient text (`background-clip: text`).
-    Never intentional.
-    Use a solid color.
-- **Don't** use glassmorphism: blur backgrounds, frosted cards, backdrop-filter as decoration.
-- **Don't** use hero metrics: big number, small label, gradient accent.
-    This is an AI startup cliché and it's prohibited.
-- **Don't** use animated counters, scroll-triggered number tickers, or decorative entrance animations.
-- **Don't** use a `border-left` greater than 1px as a colored accent stripe on any element.
-- **Don't** use gradient blob backgrounds, mesh gradients, or radial color washes behind content.
-- **Don't** use `#000000` or `#ffffff` as literal color values.
-    Tint every neutral toward the brand hue.
-- **Don't** add Material's three-layer `box-shadow` to new components.
-    The shadow says "lifted and interactive"; flat says "structural and trusted."
-- **Don't** write hero copy that makes promises about productivity ("10x", "streamline", "supercharge").
-    State what Foreman does, not what it will do for your feelings.
-- **Don't** use the off-brand Material defaults `#ECB7B7` and `#90030C`.
-    Replace them with Blueprint Steel tints and shades.
+Primary actions use Biolume Cyan.
+Secondary actions use Moonlit Silver borders.

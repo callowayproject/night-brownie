@@ -1,6 +1,6 @@
 /* ============================================================
-   FOREMAN · Colors & Type
-   The Worksite Palette + Single-Family Typography
+   NIGHT BROWNIE · Colors & Type
+   The Midnight Palette + Single-Family Typography
    Source of truth for tokens. See README.md for full rationale.
    ============================================================ */
 
@@ -9,94 +9,97 @@
 
 :root {
   /* ---------- Brand palette · OKLCH ---------- */
-  --blueprint-steel: oklch(42% 0.065 258); /* primary · nav, card-headers, links, active */
-  --pre-dawn-navy: oklch(23% 0.085 263); /* deepest tone · hero, body text, logo */
-  --safety-tape-pale: oklch(95% 0.14 103); /* tertiary · sidebar wash only */
-  --site-signal-amber: oklch(77% 0.17 80); /* hover/active highlight */
-  --construction-orange: oklch(63% 0.22 42); /* primary CTA · ONE per screen */
-  --near-black: oklch(15% 0.015 258); /* body text · never #000 */
+  --midnight-indigo: oklch(25% 0.08 260); /* primary · nav, card-headers, links, active */
+  --twilight-purple: oklch(30% 0.09 295); /* companion tone */
+  --moonlit-silver: oklch(80% 0.02 260); /* secondary accents */
+  --biolume-cyan: oklch(80% 0.12 200); /* primary CTA · guiding light */
+  --biolume-violet: oklch(70% 0.15 300); /* mascot glow · violet */
+  --starlight-white: oklch(96% 0.02 200); /* radiant accent */
+  --velvet-black: oklch(12% 0.01 260); /* body bg · never #000 */
+  --moonlit-white: oklch(95% 0.01 260); /* default text color */
 
   /* ---------- Tonal ramps (from DESIGN.json) ---------- */
-  --steel-100: #1A2136;
-  --steel-200: #252F52;
-  --steel-300: #2F3D68;
-  --steel-400: #43527A;
-  --steel-500: #5D6D97;
-  --steel-600: #7B8AB0;
-  --steel-700: #A3AECA;
-  --steel-800: #D4D9EB;
+  --indigo-100: #0C1524;
+  --indigo-200: #121F38;
+  --indigo-300: #1A2136;
+  --indigo-400: #252F52;
+  --indigo-500: #3D4D7A;
+  --indigo-600: #5D6D97;
+  --indigo-700: #7B8AB0;
+  --indigo-800: #A3AECA;
 
-  --navy-100: #0C1524;
-  --navy-200: #121F38;
-  --navy-300: #192C50;
-  --navy-400: #172A54;
-  --navy-500: #2B4A8C;
-  --navy-600: #4A6DB8;
-  --navy-700: #7998D1;
-  --navy-800: #BAC8E9;
+  --purple-100: #1A1224;
+  --purple-200: #261A38;
+  --purple-300: #362A54;
+  --purple-400: #4A3B70;
+  --purple-500: #635292;
+  --purple-600: #816FB8;
+  --purple-700: #A492D1;
+  --purple-800: #CCBEE9;
 
-  --amber-100: #4A2A00;
-  --amber-200: #7A4500;
-  --amber-300: #AB6100;
-  --amber-400: #D68000;
-  --amber-500: #F7B526;
-  --amber-600: #FAC85C;
-  --amber-700: #FBD98E;
-  --amber-800: #FCEDB8;
+  --cyan-100: #004B5C;
+  --cyan-200: #006B82;
+  --cyan-300: #008DA8;
+  --cyan-400: #00B0D1;
+  --cyan-500: #7EE2F5;
+  --cyan-600: #B3F0FC;
+  --cyan-700: #D9F8FE;
+  --cyan-800: #F0FDFF;
 
-  --orange-100: #5C2000;
-  --orange-200: #8C3300;
-  --orange-300: #C04700;
-  --orange-400: #FE6400;
-  --orange-500: #FE8033;
-  --orange-600: #FE9D66;
-  --orange-700: #FFC099;
-  --orange-800: #FFDFCC;
+  --silver-100: #252833;
+  --silver-200: #3D4252;
+  --silver-300: #5B6175;
+  --silver-400: #7D8499;
+  --silver-500: #A4ACBF;
+  --silver-600: #CCD2E0;
+  --silver-700: #D4D9EB;
+  --silver-800: #F0F2F7;
 
-  --pale-100: #6B5C00;
-  --pale-200: #8C7A00;
-  --pale-300: #B89F00;
-  --pale-400: #D9BC00;
-  --pale-500: #EDD300;
-  --pale-600: #F5E84A;
-  --pale-700: #FDF396;
-  --pale-800: #FEFBE0;
+  --velvet-100: #05070A;
+  --velvet-200: #0A0D14;
+  --velvet-300: #131820;
+  --velvet-400: #1D2535;
+  --velvet-500: #263048;
+  --velvet-600: #36456A;
+  --velvet-700: #485E8C;
+  --velvet-800: #6D86B8;
 
   /* ---------- Surface tokens ---------- */
-  --surface: oklch(100% 0.002 258); /* card body, page bg */
-  --surface-tinted: oklch(98% 0.004 258); /* alternating sections */
-  --surface-sidebar: oklch(95% 0.14 103 / 10%); /* safety-tape wash · 10% */
-  --surface-deep: oklch(19% 0.05 263); /* code blocks on dark */
-  --surface-contrast: oklch(95% 0.008 258 / 12%); /* contrast bg */
+  --surface: var(--velvet-black); /* page bg */
+  --surface-tinted: oklch(15% 0.01 260); /* alternating sections */
+  --surface-sidebar: oklch(25% 0.08 260 / 10%); /* indigo wash */
+  --surface-deep: oklch(10% 0.01 260); /* deepest surface */
+  --surface-contrast: oklch(95% 0.01 260 / 12%); /* contrast bg */
 
   /* ---------- Foreground tokens ---------- */
-  --fg-1: var(--near-black); /* body */
-  --fg-2: oklch(38% 0.018 258); /* secondary prose */
-  --fg-3: oklch(42% 0.018 258); /* tertiary / meta */
-  --fg-on-dark: oklch(96% 0.008 258); /* text on navy/steel */
-  --fg-on-dark-2: oklch(80% 0.018 258); /* secondary on dark */
+  --fg-1: var(--moonlit-white); /* body */
+  --fg-2: oklch(80% 0.02 260); /* secondary prose (silver) */
+  --fg-3: oklch(60% 0.02 260); /* tertiary / meta */
+  --fg-on-dark: var(--moonlit-white); /* text on indigo/purple */
+  --fg-on-dark-2: oklch(85% 0.01 260); /* secondary on dark */
 
   /* ---------- Borders ---------- */
-  --border-hairline: oklch(42% 0.065 258 / 12%); /* low-contrast separator */
-  --border-default: oklch(42% 0.065 258 / 20%); /* card edge */
-  --border-strong: oklch(42% 0.065 258 / 40%); /* hover/focus */
+  --border-hairline: oklch(80% 0.02 260 / 12%); /* low-contrast separator */
+  --border-default: oklch(80% 0.02 260 / 20%); /* card edge */
+  --border-strong: var(--biolume-cyan); /* vibrant accent border */
   --search-border: 1px solid oklch(96% 0.008 258 / 25%);
   --card-border: 1px solid var(--border-default);
 
-  /* ---------- API doc-label colors ---------- */
+  /* ---------- API doc-label colors (The Midnight Palette) ---------- */
   --doc-label-private-bg: oklch(35% 0.12 15);
   --doc-label-property-bg: oklch(33% 0.10 155);
   --doc-label-read-only-bg: oklch(82% 0.16 95);
   --doc-label-fg-light: oklch(98% 0.005 258);
   --doc-label-fg-dark: oklch(15% 0.015 258);
-  --doc-symbol-parameter-fg: #829bd1;
-  --doc-symbol-type_parameter-fg: #829bd1;
-  --doc-symbol-attribute-fg: #953800;
-  --doc-symbol-function-fg: #8250df;
-  --doc-symbol-method-fg: #8250df;
-  --doc-symbol-class-fg: #0550ae;
-  --doc-symbol-type_alias-fg: #0550ae;
-  --doc-symbol-module-fg: #5cad0f;
+
+  --doc-symbol-module-fg: var(--biolume-cyan);
+  --doc-symbol-class-fg: var(--purple-400);
+  --doc-symbol-type_alias-fg: var(--purple-400);
+  --doc-symbol-function-fg: var(--cyan-400);
+  --doc-symbol-method-fg: var(--cyan-400);
+  --doc-symbol-attribute-fg: var(--moonlit-silver);
+  --doc-symbol-parameter-fg: var(--moonlit-silver);
+  --doc-symbol-type_parameter-fg: var(--moonlit-silver);
 
 
   /* ---------- Type scale ---------- */
@@ -183,7 +186,7 @@ h1, .h1 {
   line-height: var(--lh-tight);
   letter-spacing: var(--ls-tight);
   text-wrap: balance;
-  color: var(--pre-dawn-navy);
+  color: var(--biolume-cyan);
   margin: 0 0 1.5rem;
 }
 
@@ -221,7 +224,7 @@ p, .p {
   font-weight: var(--fw-medium);
   letter-spacing: var(--ls-eyebrow);
   text-transform: uppercase;
-  color: var(--blueprint-steel);
+  color: var(--biolume-violet);
 }
 
 .label {
@@ -248,14 +251,14 @@ code, .code, kbd, samp, pre {
 }
 
 a {
-  color: var(--blueprint-steel);
+  color: var(--moonlit-silver);
   text-decoration-color: var(--border-default);
   text-underline-offset: 3px;
   transition: color var(--dur-fast) var(--ease-standard);
 }
 
 a:hover {
-  color: var(--site-signal-amber);
+  color: var(--biolume-cyan);
 }
 
 hr {
@@ -265,6 +268,6 @@ hr {
 }
 
 ::selection {
-  background: var(--site-signal-amber);
-  color: var(--pre-dawn-navy);
+  background: var(--biolume-cyan);
+  color: var(--velvet-black);
 }

@@ -1,5 +1,5 @@
 header {
-  background: var(--blueprint-steel);
+  background: var(--midnight-indigo);
   color: white;
   display: flex;
   align-items: center;
@@ -36,7 +36,7 @@ header {
     font-size: var(--fs-nav-item);
 
     [aria-current="page"] {
-      color: var(--site-signal-amber);
+      color: var(--biolume-cyan);
       font-weight: var(--fw-semibold);
     }
 
