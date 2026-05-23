@@ -18,6 +18,7 @@ import uvicorn
 
 from night_brownie.config import ConfigError, load_config
 from night_brownie.containers import ContainerError, ContainerManager
+from night_brownie.containers.base import backend_from_config
 from night_brownie.memory import MemoryStore
 from night_brownie.poller import GitHubPoller
 from night_brownie.queue import TaskQueue
@@ -171,38 +172,16 @@ def _run_start(args: Any) -> None:
 
         poller = GitHubPoller(token=config.identity.github_token, memory=memory)
 
-        # 4. Start agent containers (if any are configured with image + port).
+        # 4. Create container manager for agent containers (if any are configured).
         container_manager: ContainerManager | None = None
-        agent_urls: dict[str, str] = {}
         agent_specs = _collect_agent_images(config)
 
         if agent_specs:
             try:
-                container_manager = ContainerManager()
+                container_manager = ContainerManager(backend_from_config(config.containers))
             except ContainerError as exc:
                 print(f"Error: {exc}", file=sys.stderr)
                 sys.exit(1)
-            for agent_type, image, port in agent_specs:
-                try:
-                    # 1. Build environment for the agent container.
-                    # It needs to reach the harness (NIGHT_BROWNIE_URL) and know its own URL (AGENT_URL).
-                    # Heuristic: on macOS/Windows, host.docker.internal reaches the host.
-                    env = {
-                        "NIGHT_BROWNIE_URL": f"http://host.containers.internal:{args.port}",
-                        "AGENT_URL": f"http://localhost:{port}",
-                    }
-
-                    # 2. Pass LLM API key to the provider-specific env var LiteLLM expects in the agent.
-                    if config.llm.api_key:
-                        provider = config.llm.provider.lower()
-                        env_key = f"{provider.upper()}_API_KEY"
-                        env[env_key] = config.llm.api_key.get_secret_value()
-
-                    url = container_manager.start_agent(agent_type, image=image, port=port, environment=env)
-                    agent_urls[agent_type] = url
-                except ContainerError as exc:
-                    print(f"Error starting agent '{agent_type}': {exc}", file=sys.stderr)
-                    sys.exit(1)
 
         logger.info(
             "Night Brownie initialized",
@@ -213,7 +192,85 @@ def _run_start(args: Any) -> None:
         )
 
         # 5. Run the poller and HTTP server concurrently.
-        asyncio.run(_run_loop(config, memory, poller, dispatcher, args.host, args.port, container_manager, agent_urls))
+        asyncio.run(
+            _run_loop(
+                config, memory, poller, dispatcher, args.host, args.port, container_manager, agent_specs=agent_specs
+            )
+        )
+
+
+async def _start_agent_containers(
+    config: NightBrownieConfig,
+    container_manager: ContainerManager | None,
+    agent_specs: list[tuple[str, str, int]] | None,
+    harness_port: int,
+) -> dict[str, str]:
+    """Start all agent containers listed in *agent_specs* and return their URLs.
+
+    Args:
+        config: Validated runtime configuration (used for LLM API key injection).
+        container_manager: The container manager used to start each agent.
+        agent_specs: List of (agent_type, image, agent_port) tuples. May be ``None``.
+        harness_port: The HTTP server port, injected as ``NIGHT_BROWNIE_URL``.
+
+    Returns:
+        Mapping of agent_type → base URL for each successfully started container.
+    """
+    if not agent_specs or container_manager is None:
+        return {}
+
+    started: dict[str, str] = {}
+    for agent_type, image, agent_port in agent_specs:
+        env: dict[str, str] = {
+            "NIGHT_BROWNIE_URL": f"http://host.containers.internal:{harness_port}",
+            "AGENT_URL": f"http://localhost:{agent_port}",
+        }
+        if config.llm.api_key:
+            provider = config.llm.provider.lower()
+            env_key = f"{provider.upper()}_API_KEY"
+            env[env_key] = config.llm.api_key.get_secret_value()
+        try:
+            url = await container_manager.start_agent(agent_type, image=image, port=agent_port, environment=env)
+            started[agent_type] = url
+        except ContainerError as exc:
+            print(f"Error starting agent '{agent_type}': {exc}", file=sys.stderr)
+            sys.exit(1)
+    return started
+
+
+def _on_poller_done(task: asyncio.Task) -> None:  # type: ignore[type-arg]
+    """Log unexpected poller task termination.
+
+    Args:
+        task: The completed poller asyncio task.
+    """
+    if not task.cancelled():
+        exc = task.exception()
+        if exc is not None:
+            logger.critical("Poller task crashed unexpectedly", exc_info=exc)
+
+
+async def _dispatch_event(event: dict[str, Any], router: Router, dispatcher: Dispatcher) -> None:
+    """Route one poller event and dispatch it to the appropriate agent.
+
+    Args:
+        event: Event dict with ``repo``, ``issue_number``, and ``payload``.
+        router: Configured router used to resolve the target agent.
+        dispatcher: Dispatcher used to send the task to the agent.
+    """
+    repo = event["repo"]
+    issue_number = event["issue_number"]
+    logger.info("Issue event", repo=repo, issue_number=issue_number)
+    try:
+        route_target = router.route("issue.triage", repo)
+    except RoutingError:
+        logger.warning("Repo not in config — skipping", repo=repo)
+        return
+    if route_target is None:
+        logger.debug("No agent handles issue.triage for this repo", repo=repo)
+        return
+    logger.info("Routing to agent", repo=repo, issue_number=issue_number, agent_url=route_target.url)
+    await dispatcher.dispatch(event, route_target)
 
 
 async def _run_loop(
@@ -225,12 +282,14 @@ async def _run_loop(
     port: int,
     container_manager: ContainerManager | None = None,
     agent_urls: dict[str, str] | None = None,
+    agent_specs: list[tuple[str, str, int]] | None = None,
 ) -> None:
     """Run the poll loop and HTTP server concurrently.
 
-    The poller is started as an asyncio task alongside the uvicorn server.
-    On shutdown (SIGINT/SIGTERM), the poller task is cancelled cleanly and
-    any managed containers are stopped.
+    The HTTP server is started first and must be accepting connections before
+    agent containers are launched, because containers call back to the harness
+    during their own startup lifespan.  On shutdown (SIGINT/SIGTERM), the poller
+    task is cancelled cleanly and any managed containers are stopped.
 
     Args:
         config: Validated runtime configuration.
@@ -243,6 +302,8 @@ async def _run_loop(
             to stop on shutdown.
         agent_urls: Mapping of agent type → base URL for pre-started containers.
             Each entry is registered with the router before polling begins.
+        agent_specs: List of (agent_type, image, agent_port) tuples to start before polling.
+            Each container is started and its URL registered with the router.
     """
     router = Router(config)
 
@@ -256,24 +317,7 @@ async def _run_loop(
             repo_config: The repo configuration that produced this event.
             event: Event dict with `repo`, `issue_number`, and `payload`.
         """
-        repo = event["repo"]
-        issue_number = event["issue_number"]
-        logger.info("Issue event", repo=repo, issue_number=issue_number)
-        try:
-            route_target = router.route("issue.triage", repo)
-        except RoutingError:
-            logger.warning("Repo not in config — skipping", repo=repo)
-            return
-        if route_target is None:
-            logger.debug("No agent handles issue.triage for this repo", repo=repo)
-            return
-        logger.info(
-            "Routing to agent",
-            repo=repo,
-            issue_number=issue_number,
-            agent_url=route_target.url,
-        )
-        await dispatcher.dispatch(event, route_target)
+        await _dispatch_event(event, router, dispatcher)
 
     uv_server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_config=None))
 
@@ -285,18 +329,21 @@ async def _run_loop(
     )
 
     poller_task = asyncio.create_task(poller.run(config.repos, config.polling.interval_seconds, on_event))
-
-    def _on_poller_done(task: asyncio.Task) -> None:
-        """Log unexpected poller task termination."""
-        if not task.cancelled():
-            exc = task.exception()
-            if exc is not None:
-                logger.critical("Poller task crashed unexpectedly", exc_info=exc)
-
     poller_task.add_done_callback(_on_poller_done)
 
+    # Start the HTTP server as a background task and wait until it is bound and
+    # accepting connections.  Agent containers call back to the harness during
+    # their own startup, so the server must be ready before containers launch.
+    server_task = asyncio.create_task(uv_server.serve())
+    while not uv_server.started:
+        await asyncio.sleep(0.05)
+
+    started_urls = await _start_agent_containers(config, container_manager, agent_specs, port)
+    for agent_type, url in started_urls.items():
+        router.register_url(agent_type, url)
+
     try:
-        await uv_server.serve()
+        await server_task
     finally:
         poller_task.cancel()
         try:

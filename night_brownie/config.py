@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import yaml
 from pydantic import BaseModel, SecretStr, model_validator
@@ -80,6 +80,16 @@ class IdentityConfig(BaseModel):
 
     github_user: str
     """GitHub username of the bot account."""
+
+
+class ContainersConfig(BaseModel):
+    """Container runtime backend configuration."""
+
+    backend: Literal["docker", "podman", "apple"] = "docker"
+    """Container runtime to use."""
+
+    socket_url: str | None = None
+    """Socket URL for Docker/Podman; omit to use the default."""
 
 
 class LLMConfig(BaseModel):
@@ -161,6 +171,9 @@ class NightBrownieConfig(BaseModel):
 
     queue: QueueConfig = QueueConfig()
     """Task queue settings."""
+
+    containers: ContainersConfig = ContainersConfig()
+    """Container runtime settings."""
 
     repos: list[RepoConfig] = []
     """Repositories to monitor."""

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from night_brownie.config import ConfigError, NightBrownieConfig, QueueConfig, load_config
+from night_brownie.config import ConfigError, ContainersConfig, NightBrownieConfig, QueueConfig, load_config
 
 VALID_YAML = textwrap.dedent("""\
     identity:
@@ -212,6 +212,60 @@ class TestQueueConfig:
         p.write_text(yaml_text)
         config = load_config(p)
         assert config.queue.db_path == Path("/var/run/night-brownie/queue.db")
+
+
+class TestContainersConfig:
+    """Tests for ContainersConfig and NightBrownieConfig.containers integration."""
+
+    def test_containers_config_defaults(self) -> None:
+        """ContainersConfig defaults to docker backend with no socket_url."""
+        cfg = ContainersConfig()
+        assert cfg.backend == "docker"
+        assert cfg.socket_url is None
+
+    def test_containers_defaults_when_absent(self, valid_config_file: Path) -> None:
+        """NightBrownieConfig.containers defaults to ContainersConfig() when section is absent."""
+        config = load_config(valid_config_file)
+        assert isinstance(config.containers, ContainersConfig)
+        assert config.containers.backend == "docker"
+        assert config.containers.socket_url is None
+
+    def test_containers_podman_with_socket_url(self, tmp_path: Path) -> None:
+        """Explicit backend: podman and socket_url are parsed correctly."""
+        yaml_text = textwrap.dedent("""\
+            identity:
+              github_token: "ghp_test_token"
+              github_user: "test-bot"
+            llm:
+              provider: anthropic
+              model: claude-sonnet-4-6
+            containers:
+              backend: podman
+              socket_url: "unix:///run/user/1000/podman/podman.sock"
+        """)
+        p = tmp_path / "config.yaml"
+        p.write_text(yaml_text)
+        config = load_config(p)
+        assert config.containers.backend == "podman"
+        assert config.containers.socket_url == "unix:///run/user/1000/podman/podman.sock"
+
+    def test_containers_apple_backend(self, tmp_path: Path) -> None:
+        """Explicit backend: apple is parsed correctly."""
+        yaml_text = textwrap.dedent("""\
+            identity:
+              github_token: "ghp_test_token"
+              github_user: "test-bot"
+            llm:
+              provider: anthropic
+              model: claude-sonnet-4-6
+            containers:
+              backend: apple
+        """)
+        p = tmp_path / "config.yaml"
+        p.write_text(yaml_text)
+        config = load_config(p)
+        assert config.containers.backend == "apple"
+        assert config.containers.socket_url is None
 
 
 class TestConfigRepr:
