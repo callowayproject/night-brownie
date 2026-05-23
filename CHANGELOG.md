@@ -1,5 +1,192 @@
 # Changelog
 
+## 0.6.0 (2026-05-23)
+
+[Compare the full difference.](https://github.com/callowayproject/night-brownie/compare/0.5.0...0.6.0)
+
+### Fixes
+
+- Fix container startup ordering and auto-remove behavior. [a250000](https://github.com/callowayproject/night-brownie/commit/a2500007b2da6434ad52c093c2ed868ce9669cb3)
+
+  Containers called back to the harness's /queue/next during their own
+  startup lifespan, but the harness HTTP server wasn't listening yet —
+  causing an immediate "Connection refused" failure.
+
+  **fix:** start uvicorn as a background task and spin-wait on
+
+### New
+
+- Address container runtime abstraction review issues. [d31246a](https://github.com/callowayproject/night-brownie/commit/d31246abbf83287cf4079645a15ac74f6ef0bd13)
+
+  - apple.py: add env var sanitization (newline/null byte → ContainerError),
+    fix image_exists to raise ContainerError on CLI failure (check=True)
+  - docker.py: wrap stop_container/get_logs DockerException → ContainerError
+  - manager.py: make start_agent, handle_container_exit, \_wait_for_health async;
+    replace time.sleep with asyncio.sleep; add explicit environment param to
+    handle_container_exit, remove silent fallback
+  - base.py: add structlog warning when socket_url set for apple backend;
+    add TYPE_CHECKING comment; import structlog at module level
+  - __init__.py: remove ContainersConfig from __all__ (belongs in config.py)
+  - podman.py: rename \_DEFAULT_SOCKET → \_DEFAULT_SOCKET_TEMPLATE
+  - __main__.py: extract \_start_agent_containers async helper to keep complexity
+    under C901 limit; move agent startup into \_run_loop
+  - config.example.yaml: use ${UID} instead of hardcoded 1000 in podman example
+  - docs: add ps-visibility security note for apple backend env vars
+  - tests: full TDD coverage for all changes; async manager tests use AsyncMock
+
+- Add tests for environment variable handling in container management; update httpx to httpxyz across test files. [8c862b2](https://github.com/callowayproject/night-brownie/commit/8c862b247e06586c82e98c589d0832d27a6eb5f9)
+
+### Other
+
+- [pre-commit.ci] pre-commit autoupdate. [25503a2](https://github.com/callowayproject/night-brownie/commit/25503a28b5211994233a54ee4c07510d50f9feeb)
+
+  **updates:** - [github.com/astral-sh/ruff-pre-commit: v0.15.12 → v0.15.13](https://github.com/astral-sh/ruff-pre-commit/compare/v0.15.12...v0.15.13)
+
+- Standardize docstrings and add `backend_name` attribute for error messages across all container backends. [ed0c5e1](https://github.com/callowayproject/night-brownie/commit/ed0c5e13897799d708457a04b96b5e310d0aefb6)
+
+- Phase 8: Update documentation to reflect container runtime abstraction. [da6f31b](https://github.com/callowayproject/night-brownie/commit/da6f31b29b72b55f2438fdc322f49d2cbce14f19)
+
+  - Expanded `containers` configuration documentation in `configuration.md`: covered backend options, socket_url, and examples for Docker, Podman, and Apple Containers.
+  - Updated `api/containers.md` to document all container-related modules (base, manager, docker, podman, apple).
+  - Clarified backend support and generic runtime abstraction in `explanation.md`.
+  - Ensured pre-commit checks pass.
+
+- Mark Phase 7 complete in plan.md. [6879068](https://github.com/callowayproject/night-brownie/commit/68790689d9f65a4a797f1a59136f6251035b0c2b)
+
+- Phase 7: Update docs/specs/index.md to mark feature 03 as implemented. [b3b7718](https://github.com/callowayproject/night-brownie/commit/b3b771822ce926263ba8a5db6f19aa159043da57)
+
+- Mark Phase 6 complete in plan.md. [dfede83](https://github.com/callowayproject/night-brownie/commit/dfede83a871363b7a4866a83cb24f3e7ceb32a82)
+
+- Phase 6: Add test_backend_from_config.py, delete test_containers.py, fix __main__.py import. [9be188c](https://github.com/callowayproject/night-brownie/commit/9be188c633a280ad344f650e86bd290d31f7c32b)
+
+  - Add tests/test_backend_from_config.py: 8 parametrized tests covering all
+    three backend factory branches (docker/podman/apple) and ContainerError
+    for unknown backends
+  - Delete tests/test_containers.py: replaced by test_manager.py (Phase 4)
+    and test_backend_from_config.py; no test now imports docker.from_env
+    outside of test_docker_backend.py
+  - Fix night_brownie/__main__.py: ContainersConfig moved to config.py in
+    Phase 5; update import and use config.containers instead of ContainersConfig()
+
+- Mark Phase 5 complete in plan.md. [84ccfb1](https://github.com/callowayproject/night-brownie/commit/84ccfb12d8f640a1bb42271269dc2acef3bff5cf)
+
+- Phase 5: Add ContainersConfig to config.py and wire into NightBrownieConfig. [84350ca](https://github.com/callowayproject/night-brownie/commit/84350caee1d086905dd1986f6a866130a31065b1)
+
+  Move ContainersConfig from containers/base.py to config.py (single source of
+  truth for all config models). Import it back in base.py via TYPE_CHECKING.
+  Wire containers field into NightBrownieConfig with a docker default.
+  Update config.example.yaml with all three backend examples.
+
+- Mark Phase 4 complete in plan.md. [ad454f4](https://github.com/callowayproject/night-brownie/commit/ad454f429e2b6e1c03fcfa34f24ee0e1e19cf03f)
+
+- Phase 4: Refactor ContainerManager to accept injected ContainerBackend. [198c3e1](https://github.com/callowayproject/night-brownie/commit/198c3e173c3711161b1c7a02bc5fd0f2a1b69560)
+
+  Replace Docker SDK wiring in ContainerManager with a generic ContainerBackend
+  interface. \_containers dict of Docker objects becomes \_handles dict of opaque
+  strings; all SDK calls delegate to backend.image_exists, pull_image,
+  run_container, stop_container, and get_logs.
+
+  Add backend-agnostic test_manager.py; fix __main__.py to use backend_from_config
+  so mypy passes (Phase 7 will wire this from NightBrownieConfig).
+
+- Phase 3: Add AppleContainersBackend and wire backend_from_config. [a6936e9](https://github.com/callowayproject/night-brownie/commit/a6936e905c20cc38c10d895d9182de4a88b12e50)
+
+  Implements the subprocess-based Apple Containers CLI backend with all five
+  abstract methods; 15 new tests; wires the 'apple' case into backend_from_config.
+
+- Phase 2: Add DockerBackend, PodmanBackend, and wire backend_from_config. [8921498](https://github.com/callowayproject/night-brownie/commit/89214980e35d4f017c7ce9a4f529b7ee0d6acf3f)
+
+  - DockerBackend wraps Docker SDK; uses from_env() or DockerClient(base_url=...)
+  - PodmanBackend subclasses DockerBackend; defaults to uid-based XDG socket
+  - backend_from_config in base.py now instantiates the correct class for docker/podman
+  - 18 new tests covering init, image_exists, pull_image, run_container, stop_container, get_logs
+
+- Phase 1: Scaffold containers package with ContainerBackend ABC and ContainerError. [2821716](https://github.com/callowayproject/night-brownie/commit/2821716cd2ee88ceacd84ec5bc1ac098d5fabc32)
+
+  - Convert night_brownie/containers.py to a package
+  - Add containers/base.py: ContainerError, ContainerBackend ABC,
+    ContainersConfig, and backend_from_config stub
+  - Move ContainerManager to containers/manager.py; __init__.py
+    is now a clean re-export module (satisfies RUF067)
+  - Update test logger patch paths to night_brownie.containers.manager.logger
+  - Configure rumdl MD046 to allow fenced code blocks
+  - All 16 existing tests pass
+
+- Bump the uv group with 6 updates. [70be451](https://github.com/callowayproject/night-brownie/commit/70be4513f4c4980618eb48ea8c68be807599de2d)
+
+  Bumps the uv group with 6 updates:
+
+  | Package | From | To |
+  | --- | --- | --- |
+  | [opentelemetry-instrumentation-fastapi](https://github.com/open-telemetry/opentelemetry-python-contrib) | `0.63b0` | `0.63b1` |
+  | [opentelemetry-sdk](https://github.com/open-telemetry/opentelemetry-python) | `1.42.0` | `1.42.1` |
+  | [opentelemetry-exporter-otlp](https://github.com/open-telemetry/opentelemetry-python) | `1.42.0` | `1.42.1` |
+  | [litellm](https://github.com/BerriAI/litellm) | `1.85.0` | `1.85.1` |
+  | [uv](https://github.com/astral-sh/uv) | `0.11.15` | `0.11.16` |
+  | [pytest-socket](https://github.com/miketheman/pytest-socket) | `0.7.0` | `0.8.0` |
+
+  Updates `opentelemetry-instrumentation-fastapi` from 0.63b0 to 0.63b1
+
+  - [Release notes](https://github.com/open-telemetry/opentelemetry-python-contrib/releases)
+  - [Changelog](https://github.com/open-telemetry/opentelemetry-python-contrib/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/open-telemetry/opentelemetry-python-contrib/commits)
+
+  Updates `opentelemetry-sdk` from 1.42.0 to 1.42.1
+
+  - [Release notes](https://github.com/open-telemetry/opentelemetry-python/releases)
+  - [Changelog](https://github.com/open-telemetry/opentelemetry-python/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/open-telemetry/opentelemetry-python/compare/v1.42.0...v1.42.1)
+
+  Updates `opentelemetry-exporter-otlp` from 1.42.0 to 1.42.1
+
+  - [Release notes](https://github.com/open-telemetry/opentelemetry-python/releases)
+  - [Changelog](https://github.com/open-telemetry/opentelemetry-python/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/open-telemetry/opentelemetry-python/compare/v1.42.0...v1.42.1)
+
+  Updates `litellm` from 1.85.0 to 1.85.1
+
+  - [Release notes](https://github.com/BerriAI/litellm/releases)
+  - [Commits](https://github.com/BerriAI/litellm/compare/v1.85.0...v1.85.1)
+
+  Updates `uv` from 0.11.15 to 0.11.16
+
+  - [Release notes](https://github.com/astral-sh/uv/releases)
+  - [Changelog](https://github.com/astral-sh/uv/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/astral-sh/uv/compare/0.11.15...0.11.16)
+
+  Updates `pytest-socket` from 0.7.0 to 0.8.0
+
+  - [Release notes](https://github.com/miketheman/pytest-socket/releases)
+  - [Changelog](https://github.com/miketheman/pytest-socket/blob/main/CHANGELOG.md)
+  - [Commits](https://github.com/miketheman/pytest-socket/compare/0.7.0...0.8.0)
+
+  ______________________________________________________________________
+
+  **updated-dependencies:** - dependency-name: opentelemetry-instrumentation-fastapi
+  dependency-version: 0.63b1
+  dependency-type: direct:production
+  dependency-group: uv
+
+  **signed-off-by:** dependabot[bot] <support@github.com>
+
+- Enhance agent container initialization with environment variables; extend agent triage payload and improve error handling. [dadcb57](https://github.com/callowayproject/night-brownie/commit/dadcb57caec937f5f82ebb1a7c92b4e63e6c305a)
+
+### Updates
+
+- Update PodmanBackend test to match `Podman` in exception regex instead of `Docker`. [a1340ef](https://github.com/callowayproject/night-brownie/commit/a1340ef095c316404168fd78e5d16b85494fb612)
+
+- Refactor: Replace 'Foreman' references with 'Night Brownie'; update dependencies, examples, templates, and configuration. [b65cdae](https://github.com/callowayproject/night-brownie/commit/b65cdae53682019ec859c33e9f5ce84ef954b0e4)
+
+- Refactor: Update API docs and configuration to replace 'Foreman' references with 'Night Brownie'; adjust imports and examples accordingly. [88275b6](https://github.com/callowayproject/night-brownie/commit/88275b69a46f4b0f0eecebbbb51d69d84fcc9503)
+
+- Refactor: Update API docs and configuration to replace 'Foreman' references with 'Night Brownie'; adjust imports and examples accordingly. [421324a](https://github.com/callowayproject/night-brownie/commit/421324ae874441f4cfd41fc77657ea5c8988405a)
+
+- Refactor: Replace 'Foreman' references with 'Night Brownie' and update dependencies. [80ae1c2](https://github.com/callowayproject/night-brownie/commit/80ae1c204548fb3085f92a682bf11b48f26cdcc7)
+
+- Changed name from foreman to night brownie. [6950e62](https://github.com/callowayproject/night-brownie/commit/6950e628e9920337797adf693d9729e3bcb46542)
+
+- Refactor: Rename all references from 'Foreman' to 'Night Brownie'; update docs, imports, comments, and configuration files accordingly. [36f35d5](https://github.com/callowayproject/night-brownie/commit/36f35d5eb7b28d8b1a0f446e58ebc03c94e2f3d8)
+
 ## 0.5.0 (2026-05-16)
 
 [Compare the full difference.](https://github.com/callowayproject/night_brownie/compare/0.4.1...0.5.0)
