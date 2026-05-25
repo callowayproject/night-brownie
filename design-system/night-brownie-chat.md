@@ -43,7 +43,7 @@ The mascot should feel part of the team.
 
 * **Does the Brownie work *next* to the maintainer, or is it the solitary, efficient force managing the code while you
     sleep?**
-     The answer will significantly influence whether the imagery is more *collaborative* or *action-oriented.*
+    The answer will significantly influence whether the imagery is more *collaborative* or *action-oriented.*
 
 ---
 
@@ -74,7 +74,7 @@ A helpful and playful, yet solitary and efficient,
 Based on that direction, I have generated a concept for the Night Brownie mascot.
 I’ve focused on defining the character and its core aesthetic.
 
-***
+---
 
 ### 1. The Core Visual Identity
 
