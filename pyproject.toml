@@ -17,20 +17,20 @@ license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
     "orjson>=3.11.9",
-    "pydantic-settings>=2.14.1",
+    "pydantic-settings>=2.14.2",
     "opentelemetry-api>=1.41.0",
     "fastapi[standard]",
     "opentelemetry-instrumentation-fastapi",
     "opentelemetry-sdk",
     "opentelemetry-api",
-    "structlog>=25.5.0",
+    "structlog>=26.1.0",
     "opentelemetry-sdk>=1.32.0",
     "opentelemetry-exporter-otlp",
     "PyYAML>=6.0",
     "PyGithub>=2.0",
-    "litellm>=1.85.1",
+    "litellm>=1.91.2",
     "httpxyz>=0.28.1",
-    "docker>=7.1.0",
+    "docker>=7.2.0",
 ]
 authors = [
     { name = "Corey Oordt", email = "coreyoordt@gmail.com" },
@@ -68,7 +68,7 @@ docs = [
     "griffe-fieldz",
     "griffe-pydantic",
     "mkdocstrings[python]",
-    "zensical>=0.0.42",
+    "zensical>=0.0.50",
 ]
 
 
